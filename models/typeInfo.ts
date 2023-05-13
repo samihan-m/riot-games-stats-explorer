@@ -3,25 +3,26 @@ export type TypeInfo = {
     description: string,
 }
 
+export const defaultTypeInfo: TypeInfo[] = [
+    {
+        "gametype": "CUSTOM_GAME",
+        "description": "Custom games"
+    },
+    {
+        "gametype": "TUTORIAL_GAME",
+        "description": "Tutorial games"
+    },
+    {
+        "gametype": "MATCHED_GAME",
+        "description": "all other games"
+    }
+];
+
 export async function getAllTypeInfo(): Promise<TypeInfo[]> {
     const typeInfoUrl = "https://static.developer.riotgames.com/docs/lol/gameTypes.json";
     let typeInfoResponse = await fetch(typeInfoUrl);
     if (typeInfoResponse.ok === false) {
-        const typeInfo: TypeInfo[] = [
-            {
-                "gametype": "CUSTOM_GAME",
-                "description": "Custom games"
-            },
-            {
-                "gametype": "TUTORIAL_GAME",
-                "description": "Tutorial games"
-            },
-            {
-                "gametype": "MATCHED_GAME",
-                "description": "all other games"
-            }
-        ]
-        return typeInfo;
+        return defaultTypeInfo;
     }
     let typeInfo: TypeInfo[] = await typeInfoResponse.json();
     return typeInfo;

@@ -6,10 +6,10 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Image from "next/image";
 import { Participant } from "@/models/LolMatchData";
 import { getMostPlayedChampion, LolStatistics } from "@/models/LolStatistics";
-import { getAllMapInfo, getMapInfo, MapInfo } from "@/models/mapInfo";
-import { getAllQueueInfo, getQueueInfo, QueueInfo } from "@/models/queueInfo";
-import { getAllModeInfo, getModeInfo, ModeInfo } from "@/models/modeInfo";
-import { getAllTypeInfo, getTypeInfo, TypeInfo } from "@/models/typeInfo";
+import { defaultMapInfo, getAllMapInfo, getMapInfo, MapInfo } from "@/models/mapInfo";
+import { defaultQueueInfo, getAllQueueInfo, getQueueInfo, QueueInfo } from "@/models/queueInfo";
+import { defaultModeInfo, getAllModeInfo, getModeInfo, ModeInfo } from "@/models/modeInfo";
+import { defaultTypeInfo, getAllTypeInfo, getTypeInfo, TypeInfo } from "@/models/typeInfo";
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
 import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
@@ -36,10 +36,10 @@ export default function SummonerProfile(props: SummonerProfileProps) {
         width: 150,
     };
 
-    let allMapInfo = useRef<MapInfo[]>([]);
-    let allQueueInfo = useRef<QueueInfo[]>([]);
-    let allModeInfo = useRef<ModeInfo[]>([]);
-    let allTypeInfo = useRef<TypeInfo[]>([]);
+    let allMapInfo = useRef<MapInfo[]>(defaultMapInfo);
+    let allQueueInfo = useRef<QueueInfo[]>(defaultQueueInfo);
+    let allModeInfo = useRef<ModeInfo[]>(defaultModeInfo);
+    let allTypeInfo = useRef<TypeInfo[]>(defaultTypeInfo);
 
     const [mapIdFilterSet, setMapIdFilterSet] = useState<Set<number>>(new Set<number>());
     const [queueIdFilterSet, setQueueIdFilterSet] = useState<Set<number>>(new Set<number>());
