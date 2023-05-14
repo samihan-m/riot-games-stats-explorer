@@ -184,13 +184,22 @@ export default function SummonerProfile(props: SummonerProfileProps) {
 
     const profilePictureUrl = `https://raw.communitydragon.org/latest/game/assets/ux/summonericons/profileicon${player?.lol_profile_icon_id}.png`;
 
-    function getMatchHistoryListing(lolMatch: LolMatch) {
+    function getMatchHistoryListing(lolMatch: LolMatch): React.ReactNode {
+        // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
+        if(lolMatch.json_data.info === undefined) {
+            return <></>;
+        }
+
         let playerData: Participant = lolMatch.json_data.info.participants.find((participant) => participant.puuid === (player as Player)._id) as Participant;
 
         return <div key={lolMatch._id}>{playerData.champion_name}: {playerData.kills}/{playerData.deaths}/{playerData.assists} - {lolMatch.json_data.info.mode}/{lolMatch.json_data.info.type}, played on {(new Date(lolMatch.json_data.info.start_millis)).toLocaleDateString()}</div>
     }
 
     function getMatchHistoryListingTable(lolMatch: LolMatch): React.ReactNode {
+        // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
+        if(lolMatch.json_data.info === undefined) {
+            return <></>;
+        }
         let playerData: Participant = lolMatch.json_data.info.participants.find((participant) => participant.puuid === (player as Player)._id) as Participant;
 
         let rowData: Record<string, any> = {};

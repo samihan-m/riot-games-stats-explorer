@@ -195,6 +195,11 @@ export class LolStatistics {
     
         for (let match of lolMatches) {
 
+            // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
+            if(match.json_data.info === undefined) {
+                continue;
+            }
+
             let mapId = match.json_data.info.map_id;
             let queueId = match.json_data.info.queue_id;
             let mode = match.json_data.info.mode;
