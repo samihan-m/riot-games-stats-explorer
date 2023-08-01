@@ -13,6 +13,7 @@ import { defaultTypeInfo, getAllTypeInfo, getTypeInfo, TypeInfo } from "@/models
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
 import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
+import Link from "next/link";
 
 
 // SUPER IMPORTANT TODO: The "remaining X matches will slowly be downloaded over time" message should not appear unless the player IS BEING UPDATED.
@@ -41,6 +42,8 @@ export default function SummonerProfile(props: SummonerProfileProps) {
     const [player, setPlayer] = useState<Player | null>(null);
     const [lolMatches, setLolMatches] = useState<LolMatch[] | null>(null);
     const [matchYetToDownloadCount, setMatchYetToDownloadCount] = useState<number | null>(null);
+
+    const platform = props.playerData!.platform;
 
     let statistics = useRef(new LolStatistics(player, lolMatches));
     let tableColumns = useRef<any[]>([]);
@@ -500,8 +503,17 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                             <Stack className="friend-section" direction="column">
                                 {
                                     statistics.current.friendsPlayedWith.map((friend, index) => (
-                                        <div key={friend.puuid} className="friend-info">
-                                            <div className="friend-name">{index + 1}. {friend.summonerName[friend.summonerName.length - 1]}</div>
+                                        <div key={index} className="friend-info">
+                                            <div className="text-blue-500 text-2xl py-2">
+                                                {index + 1}. 
+                                                {/* I have to use <a> here instead of <Link> because
+                                                    if I try using Link, the links, when clicked, don't change the page URL and instead just refresh the page.
+                                                    TODO: Figure out why this is happening and get back to using <Link> instead of <a>
+                                                */}
+                                                <a href={`/lol/${platform}/${friend.summonerName.at(-1)}`} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800">
+                                                    {friend.summonerName.at(-1)}
+                                                </a>
+                                            </div>
                                             <div className="friend-games-played">Games Played Together: {friend.playCount}</div>
                                             <div className="friend-kda">Your KDA with them: {((friend.yourKills + friend.yourAssists) / friend.yourDeaths).toFixed(2)}</div>
                                             <div className="friend-kda">Their KDA with you: {((friend.friendKills + friend.friendAssists) / friend.friendDeaths).toFixed(2)}</div>
