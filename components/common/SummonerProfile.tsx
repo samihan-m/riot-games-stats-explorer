@@ -515,6 +515,8 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                 </a>
                                             </div>
                                             <div className="friend-games-played">Games Played Together: {friend.playCount}</div>
+                                            <div className="text-teal-500">Win Count: {friend.winCount}</div>
+                                            <div className="text-teal-500">Win Rate: {(friend.winCount/friend.playCount * 100).toFixed(2)}%</div>
                                             <div className="friend-kda">Your KDA with them: {((friend.yourKills + friend.yourAssists) / friend.yourDeaths).toFixed(2)}</div>
                                             <div className="friend-kda">Their KDA with you: {((friend.friendKills + friend.friendAssists) / friend.friendDeaths).toFixed(2)}</div>
                                             <div className="your-champs">

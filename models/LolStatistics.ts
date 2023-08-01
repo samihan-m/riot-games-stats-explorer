@@ -44,7 +44,7 @@ export type FriendPlayedWith = {
     playCount: number,
     winCount: number,
     lossCount: number,
-    winRate: number,
+    // winRate: number,
     friendKills: number,
     friendDeaths: number,
     friendAssists: number,
@@ -73,7 +73,7 @@ export let defaultFriendObject: FriendPlayedWith = {
     playCount: 0,
     winCount: 0,
     lossCount: 0,
-    winRate: 0,
+    // winRate: 0,
     friendKills: 0,
     friendDeaths: 0,
     friendAssists: 0,
@@ -314,6 +314,14 @@ export class LolStatistics {
                     friend.summonerName.push(allyParticipant.summoner_name);
                 }
                 friend.playCount += 1;
+
+                if (playerInformation.win === true) {
+                    friend.winCount += 1;
+                }
+                else {
+                    friend.lossCount += 1;
+                }
+
                 friend.yourKills += playerInformation.kills;
                 friend.yourDeaths += playerInformation.deaths;
                 friend.yourAssists += playerInformation.assists;
