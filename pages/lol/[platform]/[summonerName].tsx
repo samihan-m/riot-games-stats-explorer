@@ -65,7 +65,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
         setIsDownloadingMatches(true);
 
         let playerData = player as Player;
-        if(playerData["lol_name"] === null) {
+        if (playerData["lol_name"] === null) {
             // If the player doesn't have a lol_name initialized, we know we don't have the entirety of their lol stats initialized
             // (No matches to download)
             setIsDownloadingMatches(false);
@@ -89,7 +89,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     }, [player]);
 
     const updatePlayerData = useCallback(async () => {
-        if(player === null) {
+        if (player === null) {
             return;
         }
 
@@ -141,13 +141,13 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
         const latestSummonerName = playerData.lol_name;
         const platform = playerData.platform;
 
-        if(latestSummonerName !== null && latestSummonerName != summonerName) {
+        if (latestSummonerName !== null && latestSummonerName != summonerName) {
             // Update the URL to the properly formatted summoner name without causing a reload
-            push(`/lol/${platform}/${latestSummonerName}`, undefined, {shallow: true});
+            push(`/lol/${platform}/${latestSummonerName}`, undefined, { shallow: true });
             // Note: I think a reload happens anyway because I don't think you can change the value of a non-query parameter without causing a reload
         }
-        
-        if(player["lol_name"] === null) {
+
+        if (player["lol_name"] === null) {
             updatePlayerData();
             return;
         }
@@ -164,9 +164,14 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     return (
         <CustomHeadLayout title={`${summonerName}'s LoL Stats`} description={`LoL Stats for ${summonerName} in <insert current year here>`}>
             {isDownloadingMatches === true &&
-                <div className="center-form">
-                    <CircularProgress></CircularProgress>
-                </div>
+                <>
+                    <div className="center-form">
+                        <CircularProgress></CircularProgress>
+                    </div>
+                    <Typography variant="subtitle1" align="center">
+                        Downloading matches...
+                    </Typography>
+                </>
             }
             {isDownloadingMatches === false &&
                 <SummonerProfile
@@ -219,7 +224,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
                 </>
             }
             <SummonerSearch></SummonerSearch> */}
-            <CustomFooter/>
+            <CustomFooter />
         </CustomHeadLayout>
     )
 }
