@@ -26,8 +26,8 @@ export default function HeadingContent() {
                     <MenuIcon />
                 </IconButton> */}
                 <Link className="navbar-link" href="/lol">
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        LoL
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800 font-medium">
+                        All LoL Regions
                     </Typography>
                 </Link>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>

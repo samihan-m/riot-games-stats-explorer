@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { ReactNode } from "react";
 import HeadingContent from "../HeadingContent";
+import Link from "next/link";
 
 type LayoutProps = {
     children: ReactNode,
