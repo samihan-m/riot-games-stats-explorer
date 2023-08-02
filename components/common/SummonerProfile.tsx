@@ -44,8 +44,6 @@ export default function SummonerProfile(props: SummonerProfileProps) {
     const [lolMatches, setLolMatches] = useState<LolMatch[] | null>(null);
     const [matchYetToDownloadCount, setMatchYetToDownloadCount] = useState<number | null>(null);
 
-    const platform = props.playerData!.platform;
-
     let statistics = useRef(new LolStatistics(player, lolMatches));
     let tableColumns = useRef<Record<string, string | number | boolean>[]>([]);
     const defaultColDef = {
@@ -562,7 +560,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                     if I try using Link, the links, when clicked, don't change the page URL and instead just refresh the page.
                                                     TODO: Figure out why this is happening and get back to using <Link> instead of <a>
                                                 */}
-                                                <a href={`/lol/${platform}/${friend.summonerName.at(-1)}`} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800">
+                                                <a href={`/lol/${player.platform}/id/${friend.puuid}`} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800">
                                                     {friend.summonerName.at(-1)}
                                                 </a>
                                             </div>
