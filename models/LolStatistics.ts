@@ -175,6 +175,7 @@ export class LolStatistics {
         let prototypeChampionsStatsObject: ChampionStatistics = {
             "championName": "",
             "gamesPlayed": 0,
+            "k/d/a": 0.0,
         }
 
         let aggregatedChampionStatisticsObject = structuredClone(prototypeChampionsStatsObject);
@@ -335,6 +336,11 @@ export class LolStatistics {
         }
 
         this.totalKDA = calculateKDA(this.totalKills, this.totalDeaths, this.totalAssists);
+
+        // Calculate KDA for every champion object and add it t the object
+        for (let champion of this.allChampionSpecificStatistics) {
+            champion["k/d/a"] = calculateKDA(champion.kills as number, champion.deaths as number, champion.assists as number);
+        }
 
         this.friendsPlayedWith.sort((a, b) => (a.playCount > b.playCount) ? -1 : 1);
 

@@ -20,7 +20,6 @@ import Link from "next/link";
 // This might be an API issue.
 
 
-// TODO: Add a fixed column KDA to the table
 // TODO: Add a way (slider?) to select what dates to look at games from
 // TODO: Make the match history listings more interesting to look at
 // TODO: Have the server send me a discord message or something every time a request is made with the name of the summoner being requested
@@ -28,7 +27,8 @@ import Link from "next/link";
 // TODO: Add a 'my philosophy' section to the footer explaining how last year I made a 'your year in lol' thing but didn't have all the matches, 
 //       so I put this out in may to get people to download all their early year games sooner in the year than last year so I can have all the games
 // TODO: make all the html classes tailwind classes
-// TODO: remove the weird dark mode integration and just have everything styled to be dark
+// TODO: remove the weird dark mode integration and just have everything styled to be dark - NOTE: This turned out to be difficult 
+//       - I can't figure out how to make the SummonerSearch component be all white without the darkTheme applied to it
 
 type SummonerProfileProps = {
     searchedSummonerName: string,
@@ -155,6 +155,9 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                 column["pinned"] = "left";
             }
             if (key === "winRate") {
+                column["pinned"] = "left";
+            }
+            if (key === "k/d/a") {
                 column["pinned"] = "left";
             }
             tableColumns.current.push(column);
