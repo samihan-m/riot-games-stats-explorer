@@ -24,10 +24,11 @@ import Link from "next/link";
 // TODO: Add a way (slider?) to select what dates to look at games from
 // TODO: Make the match history listings more interesting to look at
 // TODO: Have the server send me a discord message or something every time a request is made with the name of the summoner being requested
-// TODO: Add getConditionalS calls to the friend info display
 // TODO: Maybe add a little display of champion icons * the number of times you played them next to each friend info display
 // TODO: Add a 'my philosophy' section to the footer explaining how last year I made a 'your year in lol' thing but didn't have all the matches, 
 //       so I put this out in may to get people to download all their early year games sooner in the year than last year so I can have all the games
+// TODO: make all the html classes tailwind classes
+// TODO: remove the weird dark mode integration and just have everything styled to be dark
 
 type SummonerProfileProps = {
     searchedSummonerName: string,
@@ -46,7 +47,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
     const platform = props.playerData!.platform;
 
     let statistics = useRef(new LolStatistics(player, lolMatches));
-    let tableColumns = useRef<any[]>([]);
+    let tableColumns = useRef<Record<string, string | number | boolean>[]>([]);
     const defaultColDef = {
         sortable: true,
         resizable: true,
@@ -63,6 +64,8 @@ export default function SummonerProfile(props: SummonerProfileProps) {
     const [modeFilterSet, setModeFilterSet] = useState<Set<string>>(new Set<string>());
     const [typeFilterSet, setTypeFilterSet] = useState<Set<string>>(new Set<string>());
     const [versionFilterSet, setVersionFilterSet] = useState<Set<string>>(new Set<string>());
+
+    const [matchIdsSetToDetailedDisplay, setMatchIdsSetToDetailedDisplay] = useState<Set<string>>(new Set<string>());
 
     useEffect(() => {
         async function loadInfoConstants() {
@@ -203,36 +206,72 @@ export default function SummonerProfile(props: SummonerProfileProps) {
 
     function getMatchHistoryListing(lolMatch: LolMatch): React.ReactNode {
         // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
-        if(lolMatch.json_data.info === undefined) {
+        if (lolMatch.json_data.info === undefined) {
             return <></>;
         }
 
         let playerData: Participant = lolMatch.json_data.info.participants.find((participant) => participant.puuid === (player as Player)._id) as Participant;
 
-        return <div key={lolMatch._id}>{playerData.champion_name}: {playerData.kills}/{playerData.deaths}/{playerData.assists} - {lolMatch.json_data.info.mode}/{lolMatch.json_data.info.type}, played on {(new Date(lolMatch.json_data.info.start_millis)).toLocaleDateString()}</div>
+        return (
+            <Stack key={lolMatch.json_data.id}>
+                <div className={"text-center"}>
+                    {playerData.win ?
+                        <span className="text-green-500">VICTORY</span>
+                        :
+                        <span className="text-red-600">DEFEAT</span>
+                    }
+                    {" - "}
+                    {playerData.champion_name}: {playerData.kills}/{playerData.deaths}/{playerData.assists}
+                    {" - "}
+                    {getDisplayQueueType(lolMatch.json_data.info.queue_id)}: {getMapInfo(lolMatch.json_data.info.map_id, allMapInfo.current).mapName}
+                    {" - "}
+                    {(new Date(lolMatch.json_data.info.start_millis)).toLocaleDateString()}
+                    {" "}
+                    {matchIdsSetToDetailedDisplay.has(lolMatch.json_data.id) === false &&
+                        <button className="hover:bg-blue-500 underline rounded px-1 text-white bg-slate-800" onClick={() => {
+                            let updatedSet = new Set(matchIdsSetToDetailedDisplay.add(lolMatch.json_data.id));
+                            setMatchIdsSetToDetailedDisplay(updatedSet);
+                        }}>Show Match Details</button>
+                    }
+                    {matchIdsSetToDetailedDisplay.has(lolMatch.json_data.id) === true &&
+                        <button className="hover:bg-blue-500 underline rounded px-1 text-white bg-slate-800" onClick={() => {
+                            matchIdsSetToDetailedDisplay.delete(lolMatch.json_data.id);
+                            let updatedSet = new Set(matchIdsSetToDetailedDisplay);
+                            setMatchIdsSetToDetailedDisplay(updatedSet);
+                        }}>Hide Match Details</button>
+                    }
+                </div>
+                <div>
+                    {matchIdsSetToDetailedDisplay.has(lolMatch.json_data.id) === true &&
+                        getMatchHistoryListingTable(lolMatch)
+                    }
+                </div>
+            </Stack>
+        )
     }
 
     function getMatchHistoryListingTable(lolMatch: LolMatch): React.ReactNode {
-        // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
-        if(lolMatch.json_data.info === undefined) {
+        // Ignore any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
+        if (lolMatch.json_data.info === undefined) {
             return <></>;
         }
+
         let playerData: Participant = lolMatch.json_data.info.participants.find((participant) => participant.puuid === (player as Player)._id) as Participant;
 
-        let rowData: Record<string, any> = {};
-
+        let playerStatistics: Record<string, any> = {};
+        let statisticNameSet = new Set<string>();
         for (let [key, value] of Object.entries(playerData)) {
             // Renaming key to not-snake-case (because if it isn't in snake case, then the table will nicely format the names of the columns)
             while (key.includes("_")) {
                 key = key.replace("_", " ");
             }
-            rowData[key] = value;
+
+            statisticNameSet.add(key);
+            playerStatistics[key] = value;
         }
 
         let columnNames = [];
-
-        for (let key of Object.keys(rowData).sort()) {
-
+        for (let key of Array.from(statisticNameSet.values()).sort()) {
             let column: Record<string, string | boolean | number> = {
                 "field": key
             };
@@ -241,19 +280,18 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                 column["pinned"] = "left";
                 column["width"] = 170;
             }
-
             columnNames.push(column);
         }
 
-        console.log(rowData);
-        console.log(columnNames);
+        let rowData = [playerStatistics];
 
         return (
-            <div style={{ height: 200, width: "100%" }}>
-                <AgGridReact className="champion-table ag-theme-material">
+            <div style={{ height: 130, width: "100%" }}>
+                <AgGridReact className="champion-table ag-theme-material"
                     rowData={rowData}
                     columnDefs={columnNames}
                     defaultColDef={defaultColDef}
+                >
                 </AgGridReact>
             </div>
         )
@@ -273,6 +311,20 @@ export default function SummonerProfile(props: SummonerProfileProps) {
             return "";
         }
         return "s";
+    }
+
+    function getDisplayQueueType(queueId: number): string {
+        // Trims off the " games" part of the queue description (e.g. "Ranked 5v5 Solo games" -> "Ranked 5v5 Solo")
+
+        let queueInfo = getQueueInfo(queueId, allQueueInfo.current);
+        if (queueInfo.description === null) {
+            return queueInfo.map;
+        }
+        let displayQueueType = queueInfo.description;
+        if (displayQueueType.endsWith(" games")) {
+            displayQueueType = displayQueueType.substring(0, displayQueueType.length - 6);
+        }
+        return displayQueueType;
     }
 
     return (
@@ -505,7 +557,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     statistics.current.friendsPlayedWith.map((friend, index) => (
                                         <div key={index} className="friend-info">
                                             <div className="text-blue-500 text-2xl py-2">
-                                                {index + 1}. 
+                                                {index + 1}.
                                                 {/* I have to use <a> here instead of <Link> because
                                                     if I try using Link, the links, when clicked, don't change the page URL and instead just refresh the page.
                                                     TODO: Figure out why this is happening and get back to using <Link> instead of <a>
@@ -516,22 +568,56 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                             </div>
                                             <div className="friend-games-played">Games Played Together: {friend.playCount}</div>
                                             <div className="text-teal-500">Win Count: {friend.winCount}</div>
-                                            <div className="text-teal-500">Win Rate: {(friend.winCount/friend.playCount * 100).toFixed(2)}%</div>
-                                            <div className="friend-kda">Your KDA with them: {((friend.yourKills + friend.yourAssists) / friend.yourDeaths).toFixed(2)}</div>
-                                            <div className="friend-kda">Their KDA with you: {((friend.friendKills + friend.friendAssists) / friend.friendDeaths).toFixed(2)}</div>
+                                            <div className="text-teal-500">Win Rate: {(friend.winCount / friend.playCount * 100).toFixed(2)}%</div>
+                                            {/* <div className="friend-kda">Your KDA with them: {((friend.yourKills + friend.yourAssists) / friend.yourDeaths).toFixed(2)} ({friend.yourKills} Kills, {friend.yourDeaths} Deaths, {friend.yourAssists} Assists) </div> */}
+                                            {/* <div className="friend-kda">Their KDA with you: {((friend.friendKills + friend.friendAssists) / friend.friendDeaths).toFixed(2)} ({friend.friendKills} Kills, {friend.friendDeaths} Kills, {friend.friendAssists} Assists)</div> */}
+                                            <div className="text-orange-500">
+                                                <div>Your KDAs When Together:</div>
+                                                <table className="mx-auto border-separate border-spacing-x-4">
+                                                    <thead className="">
+                                                        <tr>
+                                                            <th></th>
+                                                            <th className="font-normal">You</th>
+                                                            <th className="font-normal">Them</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td className="font-bold">KDA</td>
+                                                            <td className="font-bold">{((friend.yourKills + friend.yourAssists) / friend.yourDeaths).toFixed(2)}</td>
+                                                            <td className="font-bold">{((friend.friendKills + friend.friendAssists) / friend.friendDeaths).toFixed(2)}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Kills</td>
+                                                            <td>{friend.yourKills}</td>
+                                                            <td>{friend.friendKills}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Deaths</td>
+                                                            <td>{friend.yourDeaths}</td>
+                                                            <td>{friend.friendDeaths}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Assists</td>
+                                                            <td>{friend.yourAssists}</td>
+                                                            <td>{friend.friendAssists}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                             <div className="your-champs">
-                                                With your friend, you played {Object.keys(friend.youPlayed).length} different champions.<br />
-                                                You really liked playing <span className="friend-info-your-champion-name">{getMostPlayedChampion(friend.youPlayed).championName}</span> with them ({getMostPlayedChampion(friend.youPlayed).playCount} times).
+                                                With your friend, you played {Object.keys(friend.youPlayed).length} unique champion{getConditionalS(Object.keys(friend.youPlayed).length)}.<br />
+                                                You really liked playing <span className="friend-info-your-champion-name">{getMostPlayedChampion(friend.youPlayed).championName}</span> with them ({getMostPlayedChampion(friend.youPlayed).playCount} time{getConditionalS(getMostPlayedChampion(friend.youPlayed).playCount)}).
                                             </div>
                                             <div className="friend-champs">
-                                                With you, your friend played {Object.keys(friend.friendPlayed).length} different champions.<br />
-                                                They really liked playing <span className="friend-info-friend-champion-name">{getMostPlayedChampion(friend.friendPlayed).championName}</span> with you ({getMostPlayedChampion(friend.friendPlayed).playCount} times).
+                                                With you, your friend played {Object.keys(friend.friendPlayed).length} unique champion{getConditionalS(Object.keys(friend.friendPlayed).length)}.<br />
+                                                They really liked playing <span className="friend-info-friend-champion-name">{getMostPlayedChampion(friend.friendPlayed).championName}</span> with you ({getMostPlayedChampion(friend.friendPlayed).playCount} time{getConditionalS(getMostPlayedChampion(friend.friendPlayed).playCount)}).
                                             </div>
                                         </div>
                                     ))
                                 }
                             </Stack>
-                            <br/>
+                            <br />
                             <Stack direction="column">
                                 <span className="match-filters-label">Match History</span>
                                 <span className="match-filters-label-subtitle">{"A list of every match you've played, in chronological order."}</span>
