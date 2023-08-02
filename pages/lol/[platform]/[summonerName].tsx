@@ -1,6 +1,5 @@
 import CustomHeadLayout from "@/components/common/CustomHeadLayout";
 import { useRouter } from "next/router";
-import usePush from "@/utility/usePush";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Player } from "@/models/Player";
@@ -8,7 +7,6 @@ import { RequestError } from "@/models/Error";
 import { GetServerSideProps } from "next";
 import { LolMatch } from "@/models/LolMatch";
 import getConfig from "next/config";
-import SummonerSearch from "@/components/common/SummonerSearch";
 import { TextField, MenuItem, Button, Stack, Box, Typography } from '@mui/material';
 import CircularProgress from "@mui/material/CircularProgress";
 import SummonerProfile from "@/components/common/SummonerProfile";
@@ -56,7 +54,6 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     const [isDownloadingMatches, setIsDownloadingMatches] = useState<boolean>(false);
     const router = useRouter();
     let { platform, summonerName } = router.query;
-    const push = usePush();
 
     platform = platform as string;
     summonerName = summonerName as string;
@@ -165,8 +162,11 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     const doDisplayErrorContent = props.error !== undefined;
     const errorMessage = props.error?.detail as string;
 
+    // Get the summoner name to display in the page title - either the one from the database (preferrably this one) or the one from the URL
+    const summonerDisplayName = player?.lol_name === undefined ? summonerName : player.lol_name;
+
     return (
-        <CustomHeadLayout title={`${summonerName}'s LoL Stats`} description={`LoL Stats for ${summonerName} in <insert current year here>`}>
+        <CustomHeadLayout title={`${summonerDisplayName}'s LoL Stats`} description={`LoL Stats for ${summonerDisplayName} in <insert current year here>`}>
             {isDownloadingMatches === true &&
                 <>
                     <div className="center-form">
