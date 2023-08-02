@@ -4,7 +4,7 @@ import CustomHeadLayout from "@/components/common/CustomHeadLayout";
 import { RequestError } from "@/models/Error";
 import { GetServerSideProps } from "next";
 import getConfig from "next/config";
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import AllLolPlatforms from "@/components/common/AllLolPlatforms";
 
 const { publicRuntimeConfig } = getConfig();

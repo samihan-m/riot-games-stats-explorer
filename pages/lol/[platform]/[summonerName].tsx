@@ -1,46 +1,18 @@
 import CustomHeadLayout from "@/components/common/CustomHeadLayout";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
 import { Player } from "@/models/Player";
 import { RequestError } from "@/models/Error";
 import { GetServerSideProps } from "next";
 import { LolMatch } from "@/models/LolMatch";
 import getConfig from "next/config";
-import { TextField, MenuItem, Button, Stack, Box, Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import CircularProgress from "@mui/material/CircularProgress";
 import SummonerProfile from "@/components/common/SummonerProfile";
 import CustomFooter from "@/components/common/CustomFooter";
 
 const { publicRuntimeConfig } = getConfig();
 const { apiUrl } = publicRuntimeConfig;
-
-// import useSWR, { SWRResponse, Fetcher } from "swr";
-// function usePlayer(platform: string, summonerName: string) {
-//     const playerInfoEndpointUrl = `${apiUrl}/lol/summoner/${platform}/${summonerName}`
-//     const fetcher: Fetcher<Player, string> = async () => {
-//         const res = await fetch(playerInfoEndpointUrl);
-//         const resJson = await res.json();
-//         if(res.ok === false) {
-//             console.log(res.status)
-//             if(res.status === 422) {
-//                 // Invalid region
-//             }
-//             else if(res.status === 404) {
-//                 // No summoner with that name in the specified region
-//             }
-//             throw new Error(resJson["detail"])
-//         }
-//         return resJson as Player;
-//     };
-//     const {data, error, isLoading} = useSWR(playerInfoEndpointUrl, fetcher);
-
-//     return {
-//         summoner: data,
-//         isLoading,
-//         isError: error
-//     };
-// }
 
 export type LolPlayerPageProps = {
     playerData: Player | null,
@@ -63,7 +35,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
 
         let playerData = player as Player;
         if (playerData["lol_name"] === null) {
-            // If the player doesn't have a lol_name initialized, we know we don't have the entirety of their lol stats initialized
+            // If the player doesn't have a lol_name initialized, we know none of their lol stats are initialized
             // (No matches to download)
             setIsDownloadingMatches(false);
             return;
@@ -157,8 +129,6 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
 
     }, [player, summonerName, downloadLolMatches, updatePlayerData])
 
-    const profilePictureUrl = `https://raw.communitydragon.org/latest/game/assets/ux/summonericons/profileicon${player?.lol_profile_icon_id}.png`;
-
     const doDisplayErrorContent = props.error !== undefined;
     const errorMessage = props.error?.detail as string;
 
@@ -192,42 +162,6 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
                     Try searching for a different name or on a different region.
                 </Stack>
             }
-            {/* <h1>{platform} - {player === null ? summonerName : player.lol_name === null ? summonerName : player.lol_name}</h1>
-            {player &&
-                <>
-                    {player.lol_profile_icon_id &&
-                        <div className="profile-icon-container">
-                            <Image
-                                src={profilePictureUrl}
-                                alt="Profile picture"
-                                fill
-                                quality={100}
-                            />
-                        </div>
-                    }
-                    <h2>{player._id}</h2>
-                    {lolMatches !== null &&
-                        <h3>{lolMatches.length} matches downloaded (out of {player.lol_match_ids.length})</h3>
-                    }
-                    
-                    <Button
-                        className=""
-                        variant="contained"
-                        color="primary"
-                        onClick={updatePlayerData}
-                        disabled={isUpdating}
-                    >
-                        {isUpdating ? <CircularProgress/> : "Update Data" }
-                    </Button>
-                    To do list:
-                    -1. Come up with overall design for site (i.e. sidebar? / topbar?) (to understand where the subcontent of each page will be loaded to)
-                    0. Add a LoL player search page
-                    1. Make the LoL player page look good + add error handling for when search errors (display an error message + the Search Summoner widget again)
-                    + add update button
-                    2. Add more widgets to the LoL player page
-                </>
-            }
-            <SummonerSearch></SummonerSearch> */}
             <CustomFooter />
         </CustomHeadLayout>
     )

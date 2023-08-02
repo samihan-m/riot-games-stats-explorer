@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps<LolPlayerPageProps> = async 
         const errorData: RequestError = await res.json();
         // Possible values:
         // 422: Invalid platform
-        // 404: No summoner with that name in the specified region
+        // 404: No summoner with that puuid in the specified region
         props.error = errorData;
     }
     else {
