@@ -44,7 +44,7 @@ const { apiUrl } = publicRuntimeConfig;
 //     };
 // }
 
-type LolPlayerPageProps = {
+export type LolPlayerPageProps = {
     playerData: Player | null,
     error?: RequestError,
 }
@@ -143,8 +143,12 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
 
         if (latestSummonerName !== null && latestSummonerName != summonerName) {
             // Update the URL to the properly formatted summoner name without causing a reload
-            push(`/lol/${platform}/${latestSummonerName}`, undefined, { shallow: true });
-            // Note: I think a reload happens anyway because I don't think you can change the value of a non-query parameter without causing a reload
+            // router.push(`/lol/${platform}/${latestSummonerName}`, undefined, { shallow: true });
+            // Note: I think the profile refreshes anyway because what shallow routing does is remove the requirement of calling getServerSideProps again,
+            // but it still makes the React components re-render (this includes the code that downloads all of the matches from the database)
+
+            // This doesn't cause a rerender!
+            window.history.replaceState({}, "", `/lol/${platform}/${latestSummonerName}`);
         }
 
         if (player["lol_name"] === null) {
@@ -154,7 +158,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
 
         downloadLolMatches(platform, puuid);
 
-    }, [player, summonerName, push, downloadLolMatches, updatePlayerData])
+    }, [player, summonerName, downloadLolMatches, updatePlayerData])
 
     const profilePictureUrl = `https://raw.communitydragon.org/latest/game/assets/ux/summonericons/profileicon${player?.lol_profile_icon_id}.png`;
 
