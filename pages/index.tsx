@@ -1,12 +1,11 @@
 // Until I have a real home page, just copied the code from pages\lol\index.tsx to pages\index.tsx
 
-import SummonerSearch from "@/components/common/SummonerSearch";
 import CustomHeadLayout from "@/components/common/CustomHeadLayout";
 import { RequestError } from "@/models/Error";
 import { GetServerSideProps } from "next";
 import getConfig from "next/config";
 import { Stack, Typography } from "@mui/material";
-import Link from "next/link";
+import AllLolPlatforms from "@/components/common/AllLolPlatforms";
 
 const { publicRuntimeConfig } = getConfig();
 const { apiUrl } = publicRuntimeConfig;
@@ -23,31 +22,8 @@ export default function LolPage(props: LolPageProps) {
 
     return (
         <CustomHeadLayout title={`Select a LoL Platform/Region`} description={`Select a LoL Platform/Region`}>
-            {/* <h1 className="center-text">Search for a LoL player</h1>
-            <div className="center-form">
-                <SummonerSearch/>
-            </div> */}
-            {/* Map the list of all platform names to Link elements that link to .../lol/{platform} */}
             {doDisplayErrorContent === false &&
-                <div>
-                    <Typography variant="h4" align="center">
-                        All LoL Platforms (Regions)
-                    </Typography>
-                    <Typography variant="subtitle1" align="center">
-                        Click on a platform (region) to see the most recently updated summoners from that platform (region).
-                    </Typography>
-                    <div className="pt-16 text-3xl flex flex-wrap justify-evenly">
-                        {props.allPlatforms.map((platform, index) => {
-                            return (
-                                <div key={index}>
-                                    <Link href={`/lol/${platform}`} className="hover:bg-blue-500 rounded hover:underline px-4 py-2 text-white bg-slate-800">
-                                        {platform.toUpperCase()}
-                                    </Link>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
+                <AllLolPlatforms allPlatforms={props.allPlatforms}/>
             }
             {doDisplayErrorContent &&
                 <Stack direction={"column"} spacing={1} className="summoner-search-error-messages-container">

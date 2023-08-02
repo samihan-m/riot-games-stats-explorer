@@ -2,19 +2,19 @@ import { TextField, MenuItem, Button, Stack, Box } from '@mui/material';
 import { Platform, PlatformValues } from '@/models/Platform';
 import React, { useState } from 'react';
 
-export default function SummonerSearch() {
+export default function ValorantSearch() {
     const [summonerName, setSummonerName] = useState<string>("");
     const [platform, setPlatform] = useState<Platform>(PlatformValues.na1);
 
     function handleSubmit(event: React.FormEvent<HTMLFormElement> | React.KeyboardEvent | React.MouseEvent) {
         event.preventDefault();
 
-        if(summonerName.length <= 0) {
-            return;
-        }
+        // if(summonerName.length <= 0) {
+        //     return;
+        // }
 
-        const newRoute = `/lol/${platform}/${summonerName}`;
-        window.location.href = window.origin + newRoute;
+        // const newRoute = `/lol/${platform}/${summonerName}`;
+        // window.location.href = window.origin + newRoute;
     }
 
     return (
@@ -25,7 +25,8 @@ export default function SummonerSearch() {
                         className=""
                         required
                         id="outlined-required"
-                        label="Summoner Name"
+                        label="Valorant Name (NYI)"
+                        disabled
                         value={summonerName}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             setSummonerName(event.target.value);
@@ -41,6 +42,7 @@ export default function SummonerSearch() {
                         required
                         select
                         label="Region"
+                        disabled
                         value={platform}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             setPlatform(event.target.value as Platform);
@@ -52,9 +54,9 @@ export default function SummonerSearch() {
                             })
                         }
                     </TextField>
-                    <a className="hover:bg-blue-500 underline rounded px-4 py-4 text-white bg-slate-800 font-medium ml-8 hover:cursor-pointer" onClick={handleSubmit}>
+                    <button className="rounded px-4 py-4 text-gray-500 bg-slate-800 font-medium ml-8" onClick={handleSubmit} disabled>
                         Search
-                    </a>
+                    </button>
                 </Stack>
             </form>
         </Box>

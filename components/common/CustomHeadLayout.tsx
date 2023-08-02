@@ -18,12 +18,13 @@ export default function CustomHeadLayout({children, title="Riot Stats Explorer",
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <HeadingContent></HeadingContent>
-            {/* A header can go here */}
-            <main className="main-content">
-                {children}
-            </main>
-            {/* A footer can go here */}
+            <div className="h-screen bg-gray-900">
+                <HeadingContent></HeadingContent>
+                <main className="main-content h-5/6">
+                    {children}
+                </main>
+                {/* A footer can go here */}
+            </div>
         </>
     )
 }
