@@ -5,7 +5,7 @@ import { Box, Grid, Stack, Typography, Checkbox, FormControlLabel, FormGroup, Fo
 import CircularProgress from "@mui/material/CircularProgress";
 import Image from "next/image";
 import { Participant } from "@/models/LolMatchData";
-import { getMostPlayedChampion, LolStatistics } from "@/models/LolStatistics";
+import { ChampionPlayCount, getMostPlayedChampion, LolStatistics } from "@/models/LolStatistics";
 import { defaultMapInfo, getAllMapInfo, getMapInfo, MapInfo } from "@/models/mapInfo";
 import { defaultQueueInfo, getAllQueueInfo, getQueueInfo, QueueInfo } from "@/models/queueInfo";
 import { defaultModeInfo, getAllModeInfo, getModeInfo, ModeInfo } from "@/models/modeInfo";
@@ -76,6 +76,8 @@ export default function SummonerProfile(props: SummonerProfileProps) {
         setPlayer(props.playerData);
         setLolMatches(props.lolMatches);
     }, [props]);
+
+    let mostPlayedChampion: ChampionPlayCount = getMostPlayedChampion(statistics.current.playedChampions);
 
     const calculateStatistics = useCallback(() => {
         if (player === null || lolMatches === null) {
@@ -525,7 +527,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Stack className="specific-statistic-column" direction="column">
-                                            <span className="specific-statistic">Most Played: {getMostPlayedChampion(statistics.current.playedChampions).championName} ({(getMostPlayedChampion(statistics.current.playedChampions).playCount)} times)</span>
+                                            <span className="specific-statistic">Most Played: {mostPlayedChampion.championName} ({mostPlayedChampion.playCount} time{getConditionalS(mostPlayedChampion.playCount)})</span>
                                             {getRandomNumber() % 3 === 0 ? <span className="specific-statistic-subtitle">Wow!</span> : null}
                                         </Stack>
                                     </Grid>

@@ -9,16 +9,6 @@ export type ChampionPlayCount = {
     playCount: number,
 }
 
-export function incrementChampionPlayCount(championName: string, playedChampions: PlayedChampions): PlayedChampions {
-    if (championName in playedChampions) {
-        playedChampions[championName] += 1;
-    }
-    else {
-        playedChampions[championName] = 1;
-    }
-    return playedChampions;
-}
-
 export function getMostPlayedChampion(playedChampions: PlayedChampions): ChampionPlayCount {
     let mostPlayedChampion: ChampionPlayCount = {
         "championName": "",
@@ -199,6 +189,16 @@ export class LolStatistics {
             return newFriendObject;
         }
 
+        function incrementChampionPlayCount(championName: string, playedChampions: PlayedChampions): PlayedChampions {
+            if (championName in playedChampions) {
+                playedChampions[championName] += 1;
+            }
+            else {
+                playedChampions[championName] = 1;
+            }
+            return playedChampions;
+        }
+
         for (let match of lolMatches) {
 
             // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
@@ -355,8 +355,11 @@ export class LolStatistics {
         this.allChampionSpecificStatistics.sort((a, b) => (b.gamesPlayed as number) - (a.gamesPlayed as number));
 
         // Turn the friend object map into a list
-
         this.friendsPlayedWith = Array.from(friendPlayedWithObjectMap.values());
+        
+        // Remove all objects that have a playCount of less than 2
+        // Treating playing 1 game together as just random queueing into each other
+        this.friendsPlayedWith = this.friendsPlayedWith.filter((friend) => friend.playCount >= 2);
 
         this.friendsPlayedWith.sort((a, b) => (a.playCount > b.playCount) ? -1 : 1);
     }
