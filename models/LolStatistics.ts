@@ -44,7 +44,6 @@ export type FriendPlayedWith = {
     playCount: number,
     winCount: number,
     lossCount: number,
-    // winRate: number,
     friendKills: number,
     friendDeaths: number,
     friendAssists: number,
@@ -53,35 +52,6 @@ export type FriendPlayedWith = {
     yourDeaths: number,
     yourAssists: number,
     youPlayed: PlayedChampions,
-}
-
-export function getFriendObject(puuid: string, friends: FriendPlayedWith[]): FriendPlayedWith {
-    for (let friendObj of friends) {
-        if (friendObj.puuid === puuid) {
-            return friendObj;
-        }
-    }
-    let newFriendObject = structuredClone(defaultFriendObject);
-    newFriendObject.puuid = puuid;
-    friends.push(newFriendObject);
-    return newFriendObject;
-}
-
-export let defaultFriendObject: FriendPlayedWith = {
-    summonerName: [],
-    puuid: "",
-    playCount: 0,
-    winCount: 0,
-    lossCount: 0,
-    // winRate: 0,
-    friendKills: 0,
-    friendDeaths: 0,
-    friendAssists: 0,
-    friendPlayed: {},
-    yourKills: 0,
-    yourDeaths: 0,
-    yourAssists: 0,
-    youPlayed: {},
 }
 
 type ChampionStatistics = Record<string, string | number>
@@ -183,26 +153,56 @@ export class LolStatistics {
             "k/d/a": 0.0,
         }
 
+        let championStatisticsObjectMap = new Map<string, ChampionStatistics>(); // Map of champion name to champion statistics object
+
         let aggregatedChampionStatisticsObject = structuredClone(prototypeChampionsStatsObject);
         aggregatedChampionStatisticsObject.championName = "Total";
-        this.allChampionSpecificStatistics.push(aggregatedChampionStatisticsObject);
+        championStatisticsObjectMap.set(aggregatedChampionStatisticsObject.championName, aggregatedChampionStatisticsObject);
 
-        function getChampStatsObject(championName: string, allChampionStatisticObjects: ChampionStatistics[]): ChampionStatistics {
-            for (let obj of allChampionStatisticObjects) {
-                if (obj.championName === championName) {
-                    return obj;
-                }
+        function getChampStatsObject(championName: string): ChampionStatistics {
+            let champStatsObj = championStatisticsObjectMap.get(championName);
+            if (champStatsObj !== undefined) {
+                return champStatsObj;
             }
             let newObj = structuredClone(prototypeChampionsStatsObject);
-            allChampionStatisticObjects.push(newObj);
             newObj.championName = championName;
+            championStatisticsObjectMap.set(championName, newObj);
             return newObj;
         }
-    
+
+        let prototypeFriendObject: FriendPlayedWith = {
+            summonerName: [],
+            puuid: "",
+            playCount: 0,
+            winCount: 0,
+            lossCount: 0,
+            friendKills: 0,
+            friendDeaths: 0,
+            friendAssists: 0,
+            friendPlayed: {},
+            yourKills: 0,
+            yourDeaths: 0,
+            yourAssists: 0,
+            youPlayed: {},
+        }
+
+        let friendPlayedWithObjectMap = new Map<string, FriendPlayedWith>(); // Map of puuid to friend played with object
+
+        function getFriendObject(puuid: string): FriendPlayedWith {
+            let friendObject = friendPlayedWithObjectMap.get(puuid);
+            if (friendObject !== undefined) {
+                return friendObject;
+            }
+            let newFriendObject = structuredClone(prototypeFriendObject);
+            newFriendObject.puuid = puuid;
+            friendPlayedWithObjectMap.set(puuid, newFriendObject);
+            return newFriendObject;
+        }
+
         for (let match of lolMatches) {
 
             // Notice any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
-            if(match.json_data.info === undefined) {
+            if (match.json_data.info === undefined) {
                 continue;
             }
 
@@ -258,28 +258,28 @@ export class LolStatistics {
 
             // Update champion specific statistics
 
-            let championStatisticsObject = getChampStatsObject(playerInformation.champion_name, this.allChampionSpecificStatistics);
+            let championStatisticsObject = getChampStatsObject(playerInformation.champion_name);
             (championStatisticsObject.gamesPlayed as number) += 1;
             (aggregatedChampionStatisticsObject.gamesPlayed as number) += 1;
-            for(let entry of Object.entries(playerInformation)) {
+            for (let entry of Object.entries(playerInformation)) {
                 const [statName, statValue] = entry;
-                if(typeof(statValue) === "string") {
+                if (typeof (statValue) === "string") {
                     continue;
                 }
-                
-                if(statName in championStatisticsObject === false) {
+
+                if (statName in championStatisticsObject === false) {
                     championStatisticsObject[statName] = 0;
                 }
                 (championStatisticsObject[statName] as number) += Number(statValue);
 
-                if(statName in aggregatedChampionStatisticsObject === false) {
+                if (statName in aggregatedChampionStatisticsObject === false) {
                     aggregatedChampionStatisticsObject[statName] = 0;
                 }
                 (aggregatedChampionStatisticsObject[statName] as number) += Number(statValue);
             }
-            championStatisticsObject["winRate"] = ((championStatisticsObject["win"] as number)/(championStatisticsObject.gamesPlayed as number)* 100).toFixed(2);
-            aggregatedChampionStatisticsObject["winRate"] = ((aggregatedChampionStatisticsObject["win"] as number)/(aggregatedChampionStatisticsObject.gamesPlayed as number)* 100).toFixed(2);
-            
+            championStatisticsObject["winRate"] = ((championStatisticsObject["win"] as number) / (championStatisticsObject.gamesPlayed as number) * 100).toFixed(2);
+            aggregatedChampionStatisticsObject["winRate"] = ((aggregatedChampionStatisticsObject["win"] as number) / (aggregatedChampionStatisticsObject.gamesPlayed as number) * 100).toFixed(2);
+
 
             // Update overall player statistics
 
@@ -307,6 +307,8 @@ export class LolStatistics {
 
             this.pentakillCount += playerInformation.penta_kills;
 
+
+
             let playerTeamId = playerInformation.team_id;
             let allyParticipants: Participant[] = [];
             for (let participant of match.json_data.info.participants) {
@@ -315,7 +317,7 @@ export class LolStatistics {
                 }
             }
             for (let allyParticipant of allyParticipants) {
-                let friend = getFriendObject(allyParticipant.puuid, this.friendsPlayedWith);
+                let friend = getFriendObject(allyParticipant.puuid);
                 if (friend.summonerName.includes(allyParticipant.summoner_name) === false) {
                     friend.summonerName.push(allyParticipant.summoner_name);
                 }
@@ -342,14 +344,27 @@ export class LolStatistics {
 
         this.totalKDA = calculateKDA(this.totalKills, this.totalDeaths, this.totalAssists);
 
+        // Turn the champion statistics object map into a list
+        this.allChampionSpecificStatistics = [];
+        for (let champion of Object.values(championStatisticsObjectMap)) {
+            this.allChampionSpecificStatistics.push(champion);
+        }
+
         // Calculate KDA for every champion object and add it t the object
         for (let champion of this.allChampionSpecificStatistics) {
             champion["k/d/a"] = calculateKDA(champion.kills as number, champion.deaths as number, champion.assists as number);
         }
 
-        this.friendsPlayedWith.sort((a, b) => (a.playCount > b.playCount) ? -1 : 1);
-
         this.allChampionSpecificStatistics.sort((a, b) => (b.gamesPlayed as number) - (a.gamesPlayed as number));
+
+        // Turn the friend object map into a list
+
+        this.friendsPlayedWith = [];
+        for (let friend of Object.values(friendPlayedWithObjectMap)) {
+            this.friendsPlayedWith.push(friend);
+        }
+
+        this.friendsPlayedWith.sort((a, b) => (a.playCount > b.playCount) ? -1 : 1);
     }
 
 }
