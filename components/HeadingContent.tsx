@@ -24,7 +24,7 @@ export default function HeadingContent() {
                 <Grid item xs={4}>
                     <Paper elevation={12} sx={{ backgroundColor: "black" }}>
                         <Stack direction="row" id="lol-stuff">
-                            <Link href="/lol" className="rounded bg-slate-800 hover:bg-blue-500">
+                            <Link href="/lol" className="rounded bg-slate-800 hover:bg-blue-500 border-2 border-yellow-600">
                                 <Box sx={{ position: 'relative', width: "3.5rem", height: "3.5rem" }}>
                                     <Tooltip title="All LoL Regions" arrow>
                                         <Image src="/lol-logo.png" alt="" fill />
@@ -40,7 +40,7 @@ export default function HeadingContent() {
                 <Grid item xs={4}>
                     <Paper elevation={12} sx={{ backgroundColor: "black" }}>
                         <Stack direction="row" id="val-stuff">
-                            <Link href="#" className="rounded hover:cursor-not-allowed grayscale">
+                            <Link href="#" className="rounded hover:cursor-not-allowed grayscale border-2 border-red-600">
                                 <Box sx={{ position: 'relative', width: "3.5rem", height: "3.5rem" }}>
                                     <Tooltip title="All Valo Regions" arrow>
                                         <Image src="/valorant-logo.png" alt="" fill/>
