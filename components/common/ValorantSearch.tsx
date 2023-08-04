@@ -3,50 +3,103 @@ import { Platform, PlatformValues } from '@/models/Platform';
 import React, { useState } from 'react';
 
 export default function ValorantSearch() {
-    const [summonerName, setSummonerName] = useState<string>("");
+    const [valorantName, setValorantName] = useState<string>("");
     const [platform, setPlatform] = useState<Platform>(PlatformValues.na1);
 
     function handleSubmit(event: React.FormEvent<HTMLFormElement> | React.KeyboardEvent | React.MouseEvent) {
         event.preventDefault();
 
-        // if(summonerName.length <= 0) {
-        //     return;
-        // }
-
-        // const newRoute = `/lol/${platform}/${summonerName}`;
-        // window.location.href = window.origin + newRoute;
+        // TODO: Once I get access to Valorant stuff, make sure this works
+        alert("This feature is not yet available.")
+        return; 
     }
 
     return (
-        <Box className="summoner-search-container">
-            <form className="summoner-search-form" onSubmit={handleSubmit}>
-                <Stack direction={"row"} spacing={3}>
+        <Box>
+            <form className="" onSubmit={handleSubmit}>
+                <Stack direction="row" spacing={1}>
                     <TextField
                         className=""
                         required
-                        id="outlined-required"
-                        label="Valorant Name (NYI)"
-                        disabled
-                        value={summonerName}
+                        id="valorant-name"
+                        label="Valorant Name"
+                        value={valorantName}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            setSummonerName(event.target.value);
+                            setValorantName(event.target.value);
                         }}
                         onKeyDown={(e) => {
                             if(e.key === "Enter") {
                                 handleSubmit(e);
                             }
                         }}
+                        sx={
+                            {
+                                '& .MuiInputBase-root': {
+                                    color: 'white',
+                                },
+                                '& label.Mui-focused': {
+                                    color: 'white',
+                                },
+                                '& .MuiInput-underline:after': {
+                                    borderBottomColor: 'white',
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                },
+                                '& .MuiFormLabel-root': {
+                                    color: 'white',
+                                },
+                                width: "40%",
+                            }
+                        }
                     />
                     <TextField
                         className=""
                         required
                         select
                         label="Region"
-                        disabled
                         value={platform}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             setPlatform(event.target.value as Platform);
                         }}
+                        sx={
+                            {
+                                '& .MuiInputBase-root': {
+                                    color: 'white',
+                                },
+                                '& label.Mui-focused': {
+                                    color: 'white',
+                                },
+                                '& .MuiInput-underline:after': {
+                                    borderBottomColor: 'white',
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                },
+                                '& .MuiFormLabel-root': {
+                                    color: 'white',
+                                },
+                                '& .MuiSelect-icon': {
+                                    color: 'white',
+                                },
+                            }
+                        }
                     >
                         {
                             Object.keys(PlatformValues).map((value) => {
@@ -54,9 +107,9 @@ export default function ValorantSearch() {
                             })
                         }
                     </TextField>
-                    <button className="rounded px-4 py-4 text-gray-500 bg-slate-800 font-medium ml-8" onClick={handleSubmit} disabled>
+                    <a className="hover:bg-blue-500 underline rounded px-4 py-4 text-white bg-slate-800 font-medium ml-8 hover:cursor-pointer" onClick={handleSubmit}>
                         Search
-                    </button>
+                    </a>
                 </Stack>
             </form>
         </Box>

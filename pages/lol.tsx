@@ -3,7 +3,7 @@ import CustomHeadLayout from "@/components/common/CustomHeadLayout";
 import { RequestError } from "@/models/Error";
 import { GetServerSideProps } from "next";
 import getConfig from "next/config";
-import { Stack, Typography } from "@mui/material";
+import { Stack, Typography, Box } from "@mui/material";
 import Link from "next/link";
 import AllLolPlatforms from "@/components/common/AllLolPlatforms";
 
@@ -16,21 +16,38 @@ type LolPageProps = {
 }
 
 export default function LolPage(props: LolPageProps) {
-    
+
     const doDisplayErrorContent = props.error !== undefined;
     const errorMessage = props.error?.detail as string;
 
     return (
         <CustomHeadLayout title={`Select a LoL Platform/Region`} description={`Select a LoL Platform/Region`}>
-            {doDisplayErrorContent === false &&
-                <AllLolPlatforms allPlatforms={props.allPlatforms}/>
-            }
-            {doDisplayErrorContent &&
-                <Stack direction={"column"} spacing={1} className="summoner-search-error-messages-container">
-                    {errorMessage + " "} {/* Adding a space here because otherwise the error message and the following line have no space in between.*/}
-                    Try using the search bar to find a specific player.
+            <Stack direction="column" spacing={8}>
+                <Stack>
+                    {doDisplayErrorContent === false &&
+                        <AllLolPlatforms allPlatforms={props.allPlatforms} />
+                    }
+                    {doDisplayErrorContent &&
+                        <Stack direction={"column"} spacing={1} className="summoner-search-error-messages-container">
+                            {errorMessage + " "} {/* Adding a space here because otherwise the error message and the following line have no space in between.*/}
+                            Try using the search bar to find a specific player.
+                        </Stack>
+                    }
                 </Stack>
-            }
+                <Stack>
+                    <Typography variant="h4" align="center">
+                        Summoner Search
+                    </Typography>
+                    <Typography variant="subtitle1" align="center">
+                        Enter a Summoner name and the region of that summoner to view their stats.
+                    </Typography>
+                    <Box display="flex" justifyContent="center" alignItems="center" className="pt-16">
+                        <SummonerSearch searchBarWidthOverride="50%" />
+                    </Box>
+                </Stack>
+
+            </Stack>
+
         </CustomHeadLayout>
     )
 }

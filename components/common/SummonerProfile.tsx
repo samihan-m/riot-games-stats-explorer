@@ -388,7 +388,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                 <Grid className="match-filters" container spacing={3} columns={5}>
                                     <Grid item xs={1}>
                                         <FormGroup>
-                                            <FormLabel component="legend">Map Filters</FormLabel>
+                                            <FormLabel component="legend" className="text-white font-bold">Map Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.mapIdPlayCount).map(mapId => getMapInfo(Number(mapId), allMapInfo.current)).map(mapInfo => (
                                                 <>
                                                     <FormControlLabel
@@ -407,7 +407,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     </Grid>
                                     <Grid item xs={1}>
                                         <FormGroup>
-                                            <FormLabel component="legend">Queue Filters</FormLabel>
+                                            <FormLabel component="legend" className="text-white font-bold">Queue Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.queueIdPlayCount).map(queueId => getQueueInfo(Number(queueId), allQueueInfo.current)).map(queueInfo => (
                                                 <>
                                                     <FormControlLabel
@@ -426,7 +426,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     </Grid>
                                     <Grid item xs={1}>
                                         <FormGroup>
-                                            <FormLabel component="legend">Mode Filters</FormLabel>
+                                            <FormLabel component="legend" className="text-white font-bold">Mode Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.modePlayCount).map(modeName => getModeInfo(modeName, allModeInfo.current)).map(modeInfo => (
                                                 <>
                                                     <FormControlLabel
@@ -445,7 +445,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     </Grid>
                                     <Grid item xs={1}>
                                         <FormGroup>
-                                            <FormLabel component="legend">Type Filters</FormLabel>
+                                            <FormLabel component="legend" className="text-white font-bold">Type Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.typePlayCount).map(typeName => getTypeInfo(typeName, allTypeInfo.current)).map(typeInfo => (
                                                 <>
                                                     <FormControlLabel
@@ -464,7 +464,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     </Grid>
                                     <Grid item xs={1}>
                                         <FormGroup>
-                                            <FormLabel component="legend">Version Filters</FormLabel>
+                                            <FormLabel component="legend" className="text-white font-bold">Version Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.versionPlayCount).map(version => (
                                                 <>
                                                     <FormControlLabel

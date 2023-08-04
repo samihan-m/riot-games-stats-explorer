@@ -2,30 +2,43 @@ import { TextField, MenuItem, Button, Stack, Box } from '@mui/material';
 import { Platform, PlatformValues } from '@/models/Platform';
 import React, { useState } from 'react';
 
-export default function SummonerSearch() {
+type SummonerSearchProps = {
+    searchBarWidthOverride?: string;
+}
+
+export default function SummonerSearch(props: SummonerSearchProps) {
     const [summonerName, setSummonerName] = useState<string>("");
     const [platform, setPlatform] = useState<Platform>(PlatformValues.na1);
+
+    // Get the width of the search bar
+    let searchBarWidth = "40%";
+    if(props.searchBarWidthOverride) {
+        searchBarWidth = props.searchBarWidthOverride;
+    }
 
     function handleSubmit(event: React.FormEvent<HTMLFormElement> | React.KeyboardEvent | React.MouseEvent) {
         event.preventDefault();
 
+        // If the user didn't enter a name, take them to the root page for the platform they selected
         if(summonerName.length <= 0) {
+            const newRoute = `/lol/${platform}`;
+            window.location.href = window.origin + newRoute;
             return;
         }
 
         const newRoute = `/lol/${platform}/${summonerName}`;
         window.location.href = window.origin + newRoute;
+        return;
     }
 
     return (
-        <Box className="summoner-search-container">
-            <form className="summoner-search-form" onSubmit={handleSubmit}>
-                <Stack direction={"row"} spacing={3}>
+        <Box>
+            <form onSubmit={handleSubmit}>
+                <Stack direction="row" spacing={1}>
                     <TextField
                         className=""
-                        required
-                        id="outlined-required"
-                        label="Summoner Name"
+                        id="summoner-name"
+                        label="LoL Name"
                         value={summonerName}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             setSummonerName(event.target.value);
@@ -35,6 +48,34 @@ export default function SummonerSearch() {
                                 handleSubmit(e);
                             }
                         }}
+                        sx={
+                            {
+                                '& .MuiInputBase-root': {
+                                    color: 'white',
+                                },
+                                '& label.Mui-focused': {
+                                    color: 'white',
+                                },
+                                '& .MuiInput-underline:after': {
+                                    borderBottomColor: 'white',
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                },
+                                '& .MuiFormLabel-root': {
+                                    color: 'white',
+                                },
+                                width: searchBarWidth,
+                            }
+                        }
                     />
                     <TextField
                         className=""
@@ -45,6 +86,36 @@ export default function SummonerSearch() {
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             setPlatform(event.target.value as Platform);
                         }}
+                        sx={
+                            {
+                                '& .MuiInputBase-root': {
+                                    color: 'white',
+                                },
+                                '& label.Mui-focused': {
+                                    color: 'white',
+                                },
+                                '& .MuiInput-underline:after': {
+                                    borderBottomColor: 'white',
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: 'white',
+                                    },
+                                },
+                                '& .MuiFormLabel-root': {
+                                    color: 'white',
+                                },
+                                '& .MuiSelect-icon': {
+                                    color: 'white',
+                                },
+                            }
+                        }
                     >
                         {
                             Object.keys(PlatformValues).map((value) => {

@@ -15,7 +15,6 @@
 import * as React from 'react';
 import Document, { Html, Head, Main, NextScript } from 'next/document';
 import createEmotionServer from '@emotion/server/create-instance';
-import darkThemeOptions from '@/theme/darkThemeOptions';
 import createEmotionCache from '@/utility/createEmotionCache';
 
 export default class MyDocument extends Document {
@@ -23,14 +22,13 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
-          <meta name="theme-color" content={darkThemeOptions.palette.primary.main} />
-          <link
+          {/* <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-          />
+          /> */}
           {(this.props as any).emotionStyleTags}
         </Head>
-        <body>
+        <body className="bg-slate-950">
           <Main />
           <NextScript />
         </body>

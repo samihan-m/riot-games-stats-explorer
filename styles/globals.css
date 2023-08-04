@@ -89,7 +89,8 @@ body {
   overflow-x: hidden;
 }
 
-body {
+/* Commenting this because I think this is part of what is causing the site to have different colors on different browsers */
+/* body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
@@ -97,7 +98,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-}
+} */
 
 a {
   color: inherit;
@@ -157,14 +158,6 @@ div#__next {
 
 .navbar-link:active {
   transform: translateY(0.1em);
-}
-
-.main-content {
-  padding-left: 10%;
-  padding-right: 10%;
-  padding-top: 2em;
-  display: flex;
-  flex-direction: column;
 }
 
 .profile-icon-container {

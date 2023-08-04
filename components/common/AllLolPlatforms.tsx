@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import { Typography, Stack } from '@mui/material';
 import Link from 'next/link';
 
 type AllLolPlatformsProps = {
@@ -7,14 +7,14 @@ type AllLolPlatformsProps = {
 
 export default function AllLolPlatforms(props: AllLolPlatformsProps) {
     return (
-        <div>
+        <Stack className="text-white">
             <Typography variant="h4" align="center">
                 All LoL Platforms (Regions)
             </Typography>
             <Typography variant="subtitle1" align="center">
                 Click on a platform to see the most recently updated summoners from that platform.
             </Typography>
-            <div className="pt-16 text-3xl flex flex-wrap justify-evenly">
+            <Stack direction="row" className="pt-16 text-3xl" justifyContent="space-evenly">
                 {props.allPlatforms.map((platform, index) => {
                     return (
                         <div key={index}>
@@ -24,7 +24,7 @@ export default function AllLolPlatforms(props: AllLolPlatformsProps) {
                         </div>
                     )
                 })}
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     )
 }
