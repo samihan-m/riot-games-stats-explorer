@@ -135,10 +135,13 @@ export class LolStatistics {
             return;
         }
 
+        console.log("Constructed statistics object, calculating...")
         this.calculateStatistics(player, lolMatches);
     }
 
     resetStatistics() {
+        console.log("Resetting statistics");
+
         this.mapIdPlayCount = {};
         this.queueIdPlayCount = {};
         this.modePlayCount = {};
@@ -170,6 +173,8 @@ export class LolStatistics {
         typeFilter: Set<string> | null = null,
         versionFilter: Set<string> | null = null
     ) {
+        console.log("Calculating statistics...")
+
         this.resetStatistics();
 
         let prototypeChampionsStatsObject: ChampionStatistics = {

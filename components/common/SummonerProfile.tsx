@@ -13,8 +13,6 @@ import { defaultTypeInfo, getAllTypeInfo, getTypeInfo, TypeInfo } from "@/models
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
 import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
-import Link from "next/link";
-
 
 // SUPER IMPORTANT TODO: The "remaining X matches will slowly be downloaded over time" message should not appear unless the player IS BEING UPDATED.
 // This might be an API issue.
@@ -27,8 +25,6 @@ import Link from "next/link";
 // TODO: Add a 'my philosophy' section to the footer explaining how last year I made a 'your year in lol' thing but didn't have all the matches, 
 //       so I put this out in may to get people to download all their early year games sooner in the year than last year so I can have all the games
 // TODO: make all the html classes tailwind classes
-// TODO: remove the weird dark mode integration and just have everything styled to be dark - NOTE: This turned out to be difficult 
-//       - I can't figure out how to make the SummonerSearch component be all white without the darkTheme applied to it
 
 type SummonerProfileProps = {
     searchedSummonerName: string,
@@ -44,7 +40,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
     const [lolMatches, setLolMatches] = useState<LolMatch[] | null>(null);
     const [matchYetToDownloadCount, setMatchYetToDownloadCount] = useState<number | null>(null);
 
-    let statistics = useRef(new LolStatistics(player, lolMatches));
+    let statistics = useRef<LolStatistics>(new LolStatistics(null, null));
     let tableColumns = useRef<Record<string, string | number | boolean>[]>([]);
     const defaultColDef = {
         sortable: true,
@@ -340,6 +336,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     alt="Profile picture"
                                     fill
                                     quality={100}
+                                    priority
                                 />
                             </div>
                         </div>
@@ -390,7 +387,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                         <FormGroup>
                                             <FormLabel component="legend" className="text-white font-bold">Map Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.mapIdPlayCount).map(mapId => getMapInfo(Number(mapId), allMapInfo.current)).map(mapInfo => (
-                                                <>
+                                                <div key={mapInfo.mapId}>
                                                     <FormControlLabel
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
@@ -401,7 +398,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         }}
                                                         label={`${mapInfo.mapName} - ${mapInfo.notes} (${statistics.current.mapIdPlayCount[mapInfo.mapId]} game${getConditionalS(statistics.current.mapIdPlayCount[mapInfo.mapId])})`}
                                                     />
-                                                </>
+                                                </div>
                                             )))}
                                         </FormGroup>
                                     </Grid>
@@ -409,7 +406,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                         <FormGroup>
                                             <FormLabel component="legend" className="text-white font-bold">Queue Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.queueIdPlayCount).map(queueId => getQueueInfo(Number(queueId), allQueueInfo.current)).map(queueInfo => (
-                                                <>
+                                                <div key={queueInfo.queueId}>
                                                     <FormControlLabel
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
@@ -420,7 +417,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         }}
                                                         label={`${queueInfo.map} - ${queueInfo.description} (${statistics.current.queueIdPlayCount[queueInfo.queueId]} game${getConditionalS(statistics.current.queueIdPlayCount[queueInfo.queueId])})`}
                                                     />
-                                                </>
+                                                </div>
                                             )))}
                                         </FormGroup>
                                     </Grid>
@@ -428,7 +425,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                         <FormGroup>
                                             <FormLabel component="legend" className="text-white font-bold">Mode Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.modePlayCount).map(modeName => getModeInfo(modeName, allModeInfo.current)).map(modeInfo => (
-                                                <>
+                                                <div key={modeInfo.gameMode}>
                                                     <FormControlLabel
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
@@ -439,7 +436,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         }}
                                                         label={`${modeInfo.gameMode} - ${modeInfo.description} (${statistics.current.modePlayCount[modeInfo.gameMode]} game${getConditionalS(statistics.current.modePlayCount[modeInfo.gameMode])})`}
                                                     />
-                                                </>
+                                                </div>
                                             )))}
                                         </FormGroup>
                                     </Grid>
@@ -447,7 +444,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                         <FormGroup>
                                             <FormLabel component="legend" className="text-white font-bold">Type Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.typePlayCount).map(typeName => getTypeInfo(typeName, allTypeInfo.current)).map(typeInfo => (
-                                                <>
+                                                <div key={typeInfo.gametype}>
                                                     <FormControlLabel
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
@@ -458,7 +455,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         }}
                                                         label={`${typeInfo.gametype} - ${typeInfo.description} (${statistics.current.typePlayCount[typeInfo.gametype]} game${getConditionalS(statistics.current.typePlayCount[typeInfo.gametype])})`}
                                                     />
-                                                </>
+                                                </div>
                                             )))}
                                         </FormGroup>
                                     </Grid>
@@ -466,7 +463,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                         <FormGroup>
                                             <FormLabel component="legend" className="text-white font-bold">Version Filters</FormLabel>
                                             {Array.from(Object.keys(statistics.current.versionPlayCount).map(version => (
-                                                <>
+                                                <div key={version}>
                                                     <FormControlLabel
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
@@ -477,7 +474,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         }}
                                                         label={`${version} (${statistics.current.versionPlayCount[version]} game${getConditionalS(statistics.current.versionPlayCount[version])})`}
                                                     />
-                                                </>
+                                                </div>
                                             )))}
                                         </FormGroup>
                                     </Grid>
@@ -623,12 +620,12 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                 <span className="match-filters-label">Match History</span>
                                 <span className="match-filters-label-subtitle">{"A list of every match you've played, in chronological order."}</span>
                                 <br />
-                                {lolMatches.map((lolMatch) => {
+                                {lolMatches.map((lolMatch, index) => {
                                     return (
-                                        <>
+                                        <div key={index}>
                                             {getMatchHistoryListing(lolMatch)}
                                             {/* {getMatchHistoryListingTable(lolMatch)} */}
-                                        </>
+                                        </div>
                                     )
                                 })}
                             </Stack>
