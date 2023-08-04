@@ -138,14 +138,12 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     return (
         <CustomHeadLayout title={`${summonerDisplayName}'s LoL Stats`} description={`LoL Stats for ${summonerDisplayName} in <insert current year here>`}>
             {isDownloadingMatches === true &&
-                <>
-                    <div className="center-form">
-                        <CircularProgress></CircularProgress>
-                    </div>
+                <Stack alignItems="center" spacing={8}>
+                    <CircularProgress></CircularProgress>
                     <Typography variant="subtitle1" align="center">
                         Downloading matches...
                     </Typography>
-                </>
+                </Stack>
             }
             {isDownloadingMatches === false &&
                 <SummonerProfile
