@@ -345,10 +345,7 @@ export class LolStatistics {
         this.totalKDA = calculateKDA(this.totalKills, this.totalDeaths, this.totalAssists);
 
         // Turn the champion statistics object map into a list
-        this.allChampionSpecificStatistics = [];
-        for (let champion of Object.values(championStatisticsObjectMap)) {
-            this.allChampionSpecificStatistics.push(champion);
-        }
+        this.allChampionSpecificStatistics = Array.from(championStatisticsObjectMap.values());
 
         // Calculate KDA for every champion object and add it t the object
         for (let champion of this.allChampionSpecificStatistics) {
@@ -359,10 +356,7 @@ export class LolStatistics {
 
         // Turn the friend object map into a list
 
-        this.friendsPlayedWith = [];
-        for (let friend of Object.values(friendPlayedWithObjectMap)) {
-            this.friendsPlayedWith.push(friend);
-        }
+        this.friendsPlayedWith = Array.from(friendPlayedWithObjectMap.values());
 
         this.friendsPlayedWith.sort((a, b) => (a.playCount > b.playCount) ? -1 : 1);
     }
