@@ -13,6 +13,9 @@
 // import { ValQueueInfo, getAllQueueInfo } from "@/models/val/ValQueueInfo";
 // import { defaultValQueueInfo } from "@/models/val/DefaultValQueueInfo";
 
+// Adding empty export for now - I need to rewrite all of this file though
+export {} ;
+
 // type ValorantProfileProps = {
 //     searchedRiotId: string,
 //     playerData: ValPlayer | null,
