@@ -8,7 +8,7 @@ import { Stack, Typography } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import CustomFooter from "@/components/common/CustomFooter";
 import { ValMatch } from "@/models/val/ValMatch";
-import ValorantProfile from "@/components/common/ValorantProfile";
+// import ValorantProfile from "@/components/common/ValorantProfile";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
