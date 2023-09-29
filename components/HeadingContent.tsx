@@ -40,7 +40,7 @@ export default function HeadingContent() {
                 <Grid item xs={4}>
                     <Paper elevation={12} sx={{ backgroundColor: "black" }}>
                         <Stack direction="row" id="val-stuff">
-                            <Link href="#" className="rounded hover:cursor-not-allowed grayscale border-2 border-red-600">
+                            <Link href="/val" className="rounded border-2 border-red-600 hover:bg-red-900">
                                 <Box sx={{ position: 'relative', width: "3.5rem", height: "3.5rem" }}>
                                     <Tooltip title="All Valo Regions" arrow>
                                         <Image src="/valorant-logo.png" alt="" fill/>

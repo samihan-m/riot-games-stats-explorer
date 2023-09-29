@@ -26,14 +26,13 @@ export default function Home() {
                         </Typography>
                     </Stack>
                     <Stack alignItems="center" spacing={4}>
-                        {/* <Link href="#" className="rounded bg-slate-800 hover:bg-blue-500 p-8"> */}
-                        <Link href="#" className="rounded p-8 hover:cursor-not-allowed grayscale border-4 border-red-600">
+                        <Link href="/val" className="rounded p-8 border-4 border-red-600 hover:bg-red-900">
                             <Box sx={{ position: 'relative', width: "20rem", height: "20rem", padding: "10rem" }}>
                                 <Image src="/valorant-logo.png" alt="" fill />
                             </Box>
                         </Link>
                         <Typography variant="h4" align="center">
-                            🚧 Valorant 🚧 <br /> (Under Construction)
+                            Valorant
                         </Typography>
                     </Stack>
                 </Stack>

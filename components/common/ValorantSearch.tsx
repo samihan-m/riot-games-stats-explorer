@@ -1,31 +1,60 @@
-import { TextField, MenuItem, Button, Stack, Box } from '@mui/material';
-import { Platform, PlatformValues } from '@/models/Platform';
+import { TextField, MenuItem, Stack, Box } from '@mui/material';
+import { ValPlatform, ValPlatformValues } from '@/models/Platform';
 import React, { useState } from 'react';
 
-export default function ValorantSearch() {
-    const [valorantName, setValorantName] = useState<string>("");
-    const [platform, setPlatform] = useState<Platform>(PlatformValues.na1);
+type ValorantPlayerSearchProps = {
+    searchBarWidthOverride?: string;
+}
+
+export default function ValorantPlayerSearch(props: ValorantPlayerSearchProps) {
+    const [riotId, setRiotId] = useState<string>("");
+    const [platform, setPlatform] = useState<ValPlatform>(ValPlatformValues.na);
+
+    // Get the width of the search bar
+    let searchBarWidth = "40%";
+    if(props.searchBarWidthOverride) {
+        searchBarWidth = props.searchBarWidthOverride;
+    }
 
     function handleSubmit(event: React.FormEvent<HTMLFormElement> | React.KeyboardEvent | React.MouseEvent) {
         event.preventDefault();
 
-        // TODO: Once I get access to Valorant stuff, make sure this works
-        alert("This feature is not yet available.")
-        return; 
+        // If the user didn't enter a name, take them to the root page for the platform they selected
+        if(riotId.length <= 0) {
+            const newRoute = `/val/${platform}`;
+            window.location.href = window.origin + newRoute;
+            return;
+        }
+        
+        // Make sure there aren't any /'s in the riot id
+        if(riotId.includes("/")) {
+            alert("Please enter a valid Riot ID.");
+            return;
+        }
+
+        // Make sure the user entered a valid riot id
+        const riotIdRegex = /(.{3,16})#(.{3,5})/ //Matches any string with 3-16 characters, followed by a #, followed by 3-5 characters
+        if(riotIdRegex.test(riotId) === false) {
+            alert("Please enter a valid Riot ID.");
+            return;
+        }
+
+        const [gameName, tagLine] = riotId.split("#");
+        const newRoute = `/val/${platform}/${gameName}/${tagLine}`;
+        window.location.href = window.origin + newRoute;
+        return;
     }
 
     return (
         <Box>
-            <form className="" onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
                 <Stack direction="row" spacing={1}>
                     <TextField
-                        className=""
-                        required
-                        id="valorant-name"
-                        label="Valorant Name"
-                        value={valorantName}
+                        id="riot-id"
+                        label="Riot ID"
+                        value={riotId}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            setValorantName(event.target.value);
+                            setRiotId(event.target.value);
                         }}
                         onKeyDown={(e) => {
                             if(e.key === "Enter") {
@@ -57,18 +86,17 @@ export default function ValorantSearch() {
                                 '& .MuiFormLabel-root': {
                                     color: 'white',
                                 },
-                                width: "40%",
+                                width: searchBarWidth,
                             }
                         }
                     />
                     <TextField
                         className=""
-                        required
                         select
                         label="Region"
                         value={platform}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            setPlatform(event.target.value as Platform);
+                            setPlatform(event.target.value as ValPlatform);
                         }}
                         sx={
                             {
@@ -98,16 +126,17 @@ export default function ValorantSearch() {
                                 '& .MuiSelect-icon': {
                                     color: 'white',
                                 },
+                                width: "25%",
                             }
                         }
                     >
                         {
-                            Object.keys(PlatformValues).map((value) => {
+                            Object.keys(ValPlatformValues).map((value) => {
                                 return <MenuItem key={value} value={value}>{value}</MenuItem>
                             })
                         }
                     </TextField>
-                    <a className="hover:bg-blue-500 underline rounded px-4 py-4 text-white bg-slate-800 font-medium ml-8 hover:cursor-pointer" onClick={handleSubmit}>
+                    <a className="bg-slate-600 hover:bg-blue-500 underline rounded px-4 py-4 text-white font-medium ml-8 hover:cursor-pointer" onClick={handleSubmit}>
                         Search
                     </a>
                 </Stack>

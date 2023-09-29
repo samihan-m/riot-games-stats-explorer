@@ -1,6 +1,6 @@
 import { LolMatch } from "./LolMatch";
 import { Participant } from "./LolMatchData";
-import { Player } from "./Player";
+import { Player } from "../Player";
 
 export type PlayedChampions = Record<string, number> // champion name -> play count
 

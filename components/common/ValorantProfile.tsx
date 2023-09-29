@@ -1,46 +1,33 @@
-import { LolMatch } from "@/models/lol/LolMatch"
-import { Player } from "@/models/Player"
 import { useCallback, useEffect, useState, useRef } from "react";
 import { Box, Grid, Stack, Typography, Checkbox, FormControlLabel, FormGroup, FormLabel, Button } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import Image from "next/image";
-import { Participant } from "@/models/lol/LolMatchData";
-import { ChampionPlayCount, getMostPlayedChampion, LolStatistics } from "@/models/lol/LolStatistics";
-import { defaultMapInfo, getAllMapInfo, getMapInfo, MapInfo } from "@/models/lol/mapInfo";
-import { defaultQueueInfo, getAllQueueInfo, getQueueInfo, QueueInfo } from "@/models/lol/queueInfo";
-import { defaultModeInfo, getAllModeInfo, getModeInfo, ModeInfo } from "@/models/lol/modeInfo";
-import { defaultTypeInfo, getAllTypeInfo, getTypeInfo, TypeInfo } from "@/models/lol/typeInfo";
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
 import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
+import { ValPlayer } from "@/models/val/ValPlayer";
+import { ValMatch } from "@/models/val/ValMatch";
+import { ValStatistics } from "@/models/val/ValStatistics";
+import { ValMapInfo, getAllValMapInfo } from "@/models/val/ValMapInfo";
+import { defaultValMapInfo } from "@/models/val/DefaultValMapInfo";
+import { ValQueueInfo, getAllQueueInfo } from "@/models/val/ValQueueInfo";
+import { defaultValQueueInfo } from "@/models/val/DefaultValQueueInfo";
 
-// SUPER IMPORTANT TODO: The "remaining X matches will slowly be downloaded over time" message should not appear unless the player IS BEING UPDATED.
-// This might be an API issue.
-
-
-// TODO: Add a way (slider?) to select what dates to look at games from
-// TODO: Make the match history listings more interesting to look at
-// TODO: Have the server send me a discord message or something every time a request is made with the name of the summoner being requested
-// TODO: Maybe add a little display of champion icons * the number of times you played them next to each friend info display
-// TODO: Add a 'my philosophy' section to the footer explaining how last year I made a 'your year in lol' thing but didn't have all the matches, 
-//       so I put this out in may to get people to download all their early year games sooner in the year than last year so I can have all the games
-// TODO: make all the html classes tailwind classes
-
-type SummonerProfileProps = {
-    searchedSummonerName: string,
-    playerData: Player | null,
-    lolMatches: LolMatch[] | null,
+type ValorantProfileProps = {
+    searchedRiotId: string,
+    playerData: ValPlayer | null,
+    valMatches: ValMatch[] | null,
     updatePlayerDataCallback: () => Promise<void>,
     isCurrentlyUpdating: boolean,
 }
 
-export default function SummonerProfile(props: SummonerProfileProps) {
-    const searchedSummonerName = props.searchedSummonerName;
-    const [player, setPlayer] = useState<Player | null>(null);
-    const [lolMatches, setLolMatches] = useState<LolMatch[] | null>(null);
+export default function ValorantProfile(props: ValorantProfileProps) {
+    const searchedSummonerName = props.searchedRiotId;
+    const [player, setPlayer] = useState<ValPlayer | null>(null);
+    const [valMatches, setValMatches] = useState<ValMatch[] | null>(null);
     const [matchYetToDownloadCount, setMatchYetToDownloadCount] = useState<number | null>(null);
 
-    let statistics = useRef<LolStatistics>(new LolStatistics(null, null));
+    let statistics = useRef<ValStatistics>(new ValStatistics(null, null));
     let tableColumns = useRef<Record<string, string | number | boolean>[]>([]);
     const defaultColDef = {
         sortable: true,
@@ -48,25 +35,25 @@ export default function SummonerProfile(props: SummonerProfileProps) {
         width: 150,
     };
 
-    let allMapInfo = useRef<MapInfo[]>(defaultMapInfo);
-    let allQueueInfo = useRef<QueueInfo[]>(defaultQueueInfo);
-    let allModeInfo = useRef<ModeInfo[]>(defaultModeInfo);
-    let allTypeInfo = useRef<TypeInfo[]>(defaultTypeInfo);
+    let allMapInfo = useRef<ValMapInfo[]>(defaultValMapInfo);
+    let allQueueInfo = useRef<ValQueueInfo[]>(defaultValQueueInfo);
+    // let allModeInfo = useRef<ModeInfo[]>(defaultModeInfo);
+    // let allTypeInfo = useRef<TypeInfo[]>(defaultTypeInfo);
 
     const [mapIdFilterSet, setMapIdFilterSet] = useState<Set<number>>(new Set<number>());
     const [queueIdFilterSet, setQueueIdFilterSet] = useState<Set<number>>(new Set<number>());
-    const [modeFilterSet, setModeFilterSet] = useState<Set<string>>(new Set<string>());
-    const [typeFilterSet, setTypeFilterSet] = useState<Set<string>>(new Set<string>());
+    // const [modeFilterSet, setModeFilterSet] = useState<Set<string>>(new Set<string>());
+    // const [typeFilterSet, setTypeFilterSet] = useState<Set<string>>(new Set<string>());
     const [versionFilterSet, setVersionFilterSet] = useState<Set<string>>(new Set<string>());
 
     const [matchIdsSetToDetailedDisplay, setMatchIdsSetToDetailedDisplay] = useState<Set<string>>(new Set<string>());
 
     useEffect(() => {
         async function loadInfoConstants() {
-            allMapInfo.current = await getAllMapInfo();
+            allMapInfo.current = await getAllValMapInfo();
             allQueueInfo.current = await getAllQueueInfo();
-            allModeInfo.current = await getAllModeInfo();
-            allTypeInfo.current = await getAllTypeInfo();
+            // allModeInfo.current = await getAllModeInfo();
+            // allTypeInfo.current = await getAllTypeInfo();
         }
 
         loadInfoConstants();
@@ -74,25 +61,25 @@ export default function SummonerProfile(props: SummonerProfileProps) {
 
     useEffect(() => {
         setPlayer(props.playerData);
-        setLolMatches(props.lolMatches);
+        setValMatches(props.valMatches);
     }, [props]);
 
-    let mostPlayedChampion: ChampionPlayCount = getMostPlayedChampion(statistics.current.playedChampions);
+    let mostPlayedChampion: ChampionPlayCount = getMostPlayedChampion(statistics.current.playedAgents);
 
     const calculateStatistics = useCallback(() => {
-        if (player === null || lolMatches === null) {
+        if (player === null || valMatches === null) {
             return;
         }
 
-        statistics.current = new LolStatistics(player, lolMatches);
+        statistics.current = new LolStatistics(player, valMatches);
 
         rerenderTable();
 
-    }, [player, lolMatches, statistics]);
+    }, [player, valMatches, statistics]);
 
 
     function rerenderTable() {
-        for (let champStatsObj of statistics.current.allChampionSpecificStatistics) {
+        for (let champStatsObj of statistics.current.allAgentSpecificStatistics) {
             delete champStatsObj["_meta"]
             delete champStatsObj["bounty_level"]
             delete champStatsObj["champion_id"]
@@ -122,7 +109,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
         }
 
         let statisticNameSet = new Set<string>();
-        for (let champStatObj of statistics.current.allChampionSpecificStatistics) {
+        for (let champStatObj of statistics.current.allAgentSpecificStatistics) {
             for (let key of Object.keys(champStatObj)) {
                 // Renaming key to not-snake-case (because if it isn't in snake case, then the table will nicely format the names of the columns)
                 let originalKey = key;
@@ -163,11 +150,11 @@ export default function SummonerProfile(props: SummonerProfileProps) {
     }
 
     useEffect(() => {
-        if (player !== null && lolMatches !== null) {
-            setMatchYetToDownloadCount(player["lol_match_ids"].length - lolMatches.length);
+        if (player !== null && valMatches !== null) {
+            setMatchYetToDownloadCount(player["lol_match_ids"].length - valMatches.length);
             calculateStatistics();
         }
-    }, [player, lolMatches, calculateStatistics]);
+    }, [player, valMatches, calculateStatistics]);
 
     function updateIdSet(set: Set<number>, id: number, isBoxChecked: boolean): Set<number> {
         let doFilterOutId = (isBoxChecked === false);
@@ -351,20 +338,20 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                             Level {player["lol_level"]}
                         </Typography>
                     }
-                    {lolMatches !== null &&
+                    {valMatches !== null &&
                         <>
                             <div className="center-text">
                                 {/* Found {player["lol_match_ids"].length} matches. */}
                                 {matchYetToDownloadCount !== null && matchYetToDownloadCount > 0 &&
                                     <div>
-                                        Successfully downloaded {lolMatches.length} matches.
+                                        Successfully downloaded {valMatches.length} matches.
                                         The remaining {matchYetToDownloadCount} matches will slowly be downloaded over time. Check back later!
                                     </div>
                                 }
                             </div>
                             <Box className="Statistics" sx={{ width: '100%' }}>
                                 <Stack direction="column" className="header">
-                                    <span className="subtitle center-text">Processed {lolMatches.length} games from {new Date(statistics.current.earliestGameTime).toLocaleDateString()} to {new Date(statistics.current.latestGameTime).toLocaleDateString()}.</span>
+                                    <span className="subtitle center-text">Processed {valMatches.length} games from {new Date(statistics.current.earliestGameTime).toLocaleDateString()} to {new Date(statistics.current.latestGameTime).toLocaleDateString()}.</span>
                                     <br />
                                 </Stack>
                                 <div className="center-text">
@@ -394,7 +381,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedMapIdFilterSet = updateIdSet(mapIdFilterSet, mapInfo.mapId, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(player, lolMatches, updatedMapIdFilterSet, queueIdFilterSet, modeFilterSet, typeFilterSet, versionFilterSet);
+                                                            statistics.current.calculateStatistics(player, valMatches, updatedMapIdFilterSet, queueIdFilterSet, modeFilterSet, typeFilterSet, versionFilterSet);
                                                             setMapIdFilterSet(updatedMapIdFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -413,7 +400,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedQueueIdFilterSet = updateIdSet(queueIdFilterSet, queueInfo.queueId, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(player, lolMatches, mapIdFilterSet, updatedQueueIdFilterSet, modeFilterSet, typeFilterSet, versionFilterSet);
+                                                            statistics.current.calculateStatistics(player, valMatches, mapIdFilterSet, updatedQueueIdFilterSet, modeFilterSet, typeFilterSet, versionFilterSet);
                                                             setQueueIdFilterSet(updatedQueueIdFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -432,7 +419,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedModeFilterSet = updateNameSet(modeFilterSet, modeInfo.gameMode, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(player, lolMatches, mapIdFilterSet, queueIdFilterSet, updatedModeFilterSet, typeFilterSet, versionFilterSet);
+                                                            statistics.current.calculateStatistics(player, valMatches, mapIdFilterSet, queueIdFilterSet, updatedModeFilterSet, typeFilterSet, versionFilterSet);
                                                             setModeFilterSet(updatedModeFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -451,7 +438,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedTypeFilterSet = updateNameSet(typeFilterSet, typeInfo.gametype, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(player, lolMatches, mapIdFilterSet, queueIdFilterSet, modeFilterSet, updatedTypeFilterSet, versionFilterSet);
+                                                            statistics.current.calculateStatistics(player, valMatches, mapIdFilterSet, queueIdFilterSet, modeFilterSet, updatedTypeFilterSet, versionFilterSet);
                                                             setTypeFilterSet(updatedTypeFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -470,7 +457,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedVersionFilterSet = updateNameSet(versionFilterSet, version, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(player, lolMatches, mapIdFilterSet, queueIdFilterSet, modeFilterSet, typeFilterSet, updatedVersionFilterSet);
+                                                            statistics.current.calculateStatistics(player, valMatches, mapIdFilterSet, queueIdFilterSet, modeFilterSet, typeFilterSet, updatedVersionFilterSet);
                                                             setVersionFilterSet(updatedVersionFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -541,7 +528,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                             </Stack>
                             <div style={{ height: 600, width: "100%" }}>
                                 <AgGridReact className="champion-table ag-theme-material"
-                                    rowData={statistics.current.allChampionSpecificStatistics}
+                                    rowData={statistics.current.allAgentSpecificStatistics}
                                     columnDefs={tableColumns.current}
                                     defaultColDef={defaultColDef}
                                 ></AgGridReact>
@@ -563,7 +550,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                                     TODO: Figure out why this is happening and get back to using <Link> instead of <a>
                                                 */}
                                                 <a href={`/lol/${player.platform}/id/${friend.puuid}`} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800">
-                                                    {friend.summonerName.at(-1)}
+                                                    {friend.gameName.at(-1)}
                                                 </a>
                                             </div>
                                             <div className="friend-games-played">Games Played Together: {friend.playCount}</div>
@@ -622,7 +609,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                 <span className="match-filters-label">Match History</span>
                                 <span className="match-filters-label-subtitle">{"A list of every match you've played, in chronological order."}</span>
                                 <br />
-                                {lolMatches.map((lolMatch, index) => {
+                                {valMatches.map((lolMatch, index) => {
                                     return (
                                         <div key={index}>
                                             {getMatchHistoryListing(lolMatch)}

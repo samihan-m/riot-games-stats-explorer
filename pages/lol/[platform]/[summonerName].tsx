@@ -1,10 +1,10 @@
 import CustomHeadLayout from "@/components/common/CustomHeadLayout";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Player } from "@/models/Player";
 import { RequestError } from "@/models/Error";
 import { GetServerSideProps } from "next";
-import { LolMatch } from "@/models/LolMatch";
+import { LolMatch } from "@/models/lol/LolMatch";
 import getConfig from "next/config";
 import { Stack, Typography } from '@mui/material';
 import CircularProgress from "@mui/material/CircularProgress";
@@ -25,10 +25,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     const [isUpdating, setIsUpdating] = useState<boolean>(false);
     const [isDownloadingMatches, setIsDownloadingMatches] = useState<boolean>(false);
     const router = useRouter();
-    let { platform, summonerName } = router.query;
-
-    platform = platform as string;
-    summonerName = summonerName as string;
+    let paramSummonerName = useRef("");
 
     const downloadLolMatches = useCallback(async (platform: string, puuid: string) => {
         setIsDownloadingMatches(true);
@@ -100,24 +97,34 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
     }, [player, downloadLolMatches]);
 
     useEffect(() => {
+        if(router.isReady === false) {
+            // On initial page load, the router.query object will be empty for a tiny bit.
+            // This is to prevent the page from loading without the appropriate info from the query object.
+            // See https://github.com/vercel/next.js/discussions/12661#discussioncomment-360764
+            return;
+        }
+
         if (player === null) {
             return;
         }
+
+        let queryParams = router.query as {platform: string, summonerName: string};
+        paramSummonerName.current = queryParams.summonerName;
 
         let playerData = player as Player;
 
         const puuid = playerData._id;
         const latestSummonerName = playerData.lol_name;
-        const platform = playerData.platform;
+        const latestPlatform = playerData.platform;
 
-        if (latestSummonerName !== null && latestSummonerName != summonerName) {
+        if (latestSummonerName !== null && latestSummonerName != paramSummonerName.current) {
             // Update the URL to the properly formatted summoner name without causing a reload
             // router.push(`/lol/${platform}/${latestSummonerName}`, undefined, { shallow: true });
             // Note: I think the profile refreshes anyway because what shallow routing does is remove the requirement of calling getServerSideProps again,
             // but it still makes the React components re-render (this includes the code that downloads all of the matches from the database)
 
             // This doesn't cause a rerender!
-            window.history.replaceState({}, "", `/lol/${platform}/${latestSummonerName}`);
+            window.history.replaceState({}, "", `/lol/${latestPlatform}/${latestSummonerName}`);
         }
 
         if (player["lol_name"] === null) {
@@ -125,15 +132,15 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
             return;
         }
 
-        downloadLolMatches(platform, puuid);
+        downloadLolMatches(latestPlatform, puuid);
 
-    }, [player, summonerName, downloadLolMatches, updatePlayerData])
+    }, [player, downloadLolMatches, updatePlayerData, router.isReady, router.query])
 
     const doDisplayErrorContent = props.error !== undefined;
     const errorMessage = props.error?.detail as string;
 
     // Get the summoner name to display in the page title - either the one from the database (preferrably this one) or the one from the URL
-    const summonerDisplayName = player?.lol_name === undefined ? summonerName : player.lol_name;
+    const summonerDisplayName = player?.lol_name === undefined ? paramSummonerName : player.lol_name;
 
     return (
         <CustomHeadLayout title={`${summonerDisplayName}'s LoL Stats`} description={`LoL Stats for ${summonerDisplayName} in <insert current year here>`}>
@@ -147,7 +154,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
             }
             {isDownloadingMatches === false &&
                 <SummonerProfile
-                    searchedSummonerName={summonerName}
+                    searchedSummonerName={paramSummonerName.current}
                     playerData={player}
                     lolMatches={lolMatches}
                     updatePlayerDataCallback={updatePlayerData}

@@ -1,5 +1,5 @@
-import { TextField, MenuItem, Button, Stack, Box } from '@mui/material';
-import { Platform, PlatformValues } from '@/models/Platform';
+import { TextField, MenuItem, Stack, Box } from '@mui/material';
+import { LolPlatform, LolPlatformValues } from '@/models/Platform';
 import React, { useState } from 'react';
 
 type SummonerSearchProps = {
@@ -8,7 +8,7 @@ type SummonerSearchProps = {
 
 export default function SummonerSearch(props: SummonerSearchProps) {
     const [summonerName, setSummonerName] = useState<string>("");
-    const [platform, setPlatform] = useState<Platform>(PlatformValues.na1);
+    const [platform, setPlatform] = useState<LolPlatform>(LolPlatformValues.na1);
 
     // Get the width of the search bar
     let searchBarWidth = "40%";
@@ -23,6 +23,12 @@ export default function SummonerSearch(props: SummonerSearchProps) {
         if(summonerName.length <= 0) {
             const newRoute = `/lol/${platform}`;
             window.location.href = window.origin + newRoute;
+            return;
+        }
+
+        // Make sure there aren't any /'s in the summoner name
+        if(summonerName.includes("/")) {
+            alert("Please enter a valid summoner name.");
             return;
         }
 
@@ -84,7 +90,7 @@ export default function SummonerSearch(props: SummonerSearchProps) {
                         label="Region"
                         value={platform}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            setPlatform(event.target.value as Platform);
+                            setPlatform(event.target.value as LolPlatform);
                         }}
                         sx={
                             {
@@ -118,12 +124,12 @@ export default function SummonerSearch(props: SummonerSearchProps) {
                         }
                     >
                         {
-                            Object.keys(PlatformValues).map((value) => {
+                            Object.keys(LolPlatformValues).map((value) => {
                                 return <MenuItem key={value} value={value}>{value}</MenuItem>
                             })
                         }
                     </TextField>
-                    <a className="hover:bg-blue-500 underline rounded px-4 py-4 text-white bg-slate-800 font-medium ml-8 hover:cursor-pointer" onClick={handleSubmit}>
+                    <a className="bg-slate-600 hover:bg-blue-500 underline rounded px-4 py-4 text-white font-medium ml-8 hover:cursor-pointer" onClick={handleSubmit}>
                         Search
                     </a>
                 </Stack>

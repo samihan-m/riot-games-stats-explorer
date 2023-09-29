@@ -9,46 +9,49 @@ import Link from "next/link";
 const { publicRuntimeConfig } = getConfig();
 const { apiUrl } = publicRuntimeConfig;
 
-type LolPlatformPageProps = {
+type ValPlatformPageProps = {
     platform: string,
-    summonerNames: string[],
+    riotIds: string[], // This is a list of "gameName#tagLine" strings
     error?: RequestError,
 }
 
-export default function LolPlatformPage(props: LolPlatformPageProps) {
+export default function ValPlatformPage(props: ValPlatformPageProps) {
 
     const doDisplayErrorContent = props.error !== undefined;
     const errorMessage = props.error?.detail as string;
 
     const platformDisplayName = props.platform.toUpperCase();
 
+    const gameNames = props.riotIds.map(riotId => riotId.split("#")[0]);
+    const tagLines = props.riotIds.map(riotId => riotId.split("#")[1]);
+
     return (
-        <CustomHeadLayout title={`LoL Stats in ${platformDisplayName}`} description={`LoL Stats for the ${platformDisplayName} region in <insert current year here>`}>
+        <CustomHeadLayout title={`Valorant Stats in ${platformDisplayName}`} description={`LoL Stats for the ${platformDisplayName} region in <insert current year here>`}>
             {
-                // List every summoner in summoner_names as a link to their profile page.
-                // If there are no summoners in summoner_names, display a message saying that there are no summoners.
+                // List every player in riotIds as a link to their profile page.
+                // If there are no players, display a message saying that there are none.
             }
             {
-                doDisplayErrorContent === false && props.summonerNames.length == 0 &&
+                doDisplayErrorContent === false && props.riotIds.length == 0 &&
                 <Typography variant="h4" align="center">
-                    No statistics for summoners from {platformDisplayName} are saved. Add a summoner by searching for them in the search bar.
+                    No statistics for players from {platformDisplayName} are saved. 
                 </Typography>
             }
             {
-                doDisplayErrorContent === false && props.summonerNames.length > 0 &&
+                doDisplayErrorContent === false && props.riotIds.length > 0 &&
                 <Stack>
                     <Typography variant="h4" align="center">
-                        Most Recently Updated Summoners From {platformDisplayName}
+                        Most Recently Updated Players From {platformDisplayName}
                     </Typography>
                     <Typography variant="subtitle1" align="center">
-                        Click on a summoner to see their profile page and statistics.
+                        Click on a player to see their profile page and statistics.
                     </Typography>
                     <div className="pt-8 text-3xl text-center">
-                        {props.summonerNames.map((summoner_name, index) => {
+                        {props.riotIds.map((riotId, index) => {
                             return (
                                 <div key={index} className="py-4">
-                                    <Link href={`/lol/${props.platform}/${summoner_name}`} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800">
-                                        {summoner_name}
+                                    <Link href={`/val/${props.platform}/${gameNames[index]}/${tagLines[index]}`} className="hover:bg-blue-500 underline rounded px-4 py-2 text-white bg-slate-800">
+                                        {riotId}
                                     </Link>
                                 </div>
                             )
@@ -62,20 +65,26 @@ export default function LolPlatformPage(props: LolPlatformPageProps) {
                     Try searching for a different region.
                 </Stack>
             }
+            <Stack alignItems="center" className="pt-8">
+                <Typography variant="h6" align="center">
+                    If you want to view your own statistics, give us access by signing in with your Riot ID.
+                </Typography>
+                <Link href="/riot-sign-on" className="mt-2 self-center text-xl bg-red-600 border-4 border-red-700 rounded-md pt-4 pb-4 pl-8 pr-8 text-white underline decoration-white hover:bg-red-500 hover:border-red-600">Sign in with Riot ID</Link>
+            </Stack>
             <CustomFooter />
         </CustomHeadLayout>
     )
 }
 
-export const getServerSideProps: GetServerSideProps<LolPlatformPageProps> = async (context) => {
-    let props: LolPlatformPageProps = {
+export const getServerSideProps: GetServerSideProps<ValPlatformPageProps> = async (context) => {
+    let props: ValPlatformPageProps = {
         platform: "",
-        summonerNames: [],
+        riotIds: [],
     }
 
     const { platform } = context.query;
     props.platform = (platform as string);
-    const platformInfoEndpointUrl = `${apiUrl}/lol/summoner/${platform}`;
+    const platformInfoEndpointUrl = `${apiUrl}/val/player/${platform}`;
     const res = await fetch(platformInfoEndpointUrl);
     if (res.ok === false) {
         console.log(res.status);
@@ -86,7 +95,7 @@ export const getServerSideProps: GetServerSideProps<LolPlatformPageProps> = asyn
     }
     else {
         const platformData: string[] = await res.json();
-        props.summonerNames = platformData;
+        props.riotIds = platformData;
     }
 
     return {
