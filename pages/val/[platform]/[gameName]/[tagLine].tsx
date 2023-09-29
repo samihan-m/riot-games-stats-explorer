@@ -4,7 +4,7 @@ import { RequestError } from "@/models/Error";
 import { ValPlayer } from "@/models/val/ValPlayer";
 import { GetServerSideProps } from "next";
 import getConfig from "next/config";
-import { Stack, Typography } from "@mui/material";
+import { Stack, Typography, Button } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import CustomFooter from "@/components/common/CustomFooter";
 import { ValMatch } from "@/models/val/ValMatch";
@@ -79,14 +79,15 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
             else {
                 alert(`Error updating player data: ${JSON.stringify(errorData)}`)
             }
+            setIsUpdating(false);
+            return;
         }
-        else {
-            const updatedPlayerData: ValPlayer = await res.json();
-            setPlayer(updatedPlayerData);
-        }
+        const updatedPlayerData: ValPlayer = await res.json();
+        setPlayer(updatedPlayerData);
 
-        // Fetch matches
-        await downloadValMatches(platform, puuid);
+        // Re-fetch matches
+        await downloadValMatches(updatedPlayerData.platform, updatedPlayerData._id);
+        setIsUpdating(false);
 
     }, [player, downloadValMatches]);
 
@@ -121,7 +122,7 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
     }, [player, downloadValMatches, router.isReady, router.query]);
 
     return (
-        <CustomHeadLayout title={`${riotId}'s Valorant Stats`} description={`Valorant Stats for ${riotId} in <insert current year here>`}>
+        <CustomHeadLayout title={`${riotId.current}'s Valorant Stats`} description={`Valorant Stats for ${riotId.current} in <insert current year here>`}>
             {isDownloadingMatches === true &&
                 <Stack alignItems="center" spacing={8}>
                     <CircularProgress></CircularProgress>
@@ -131,13 +132,24 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
                 </Stack>
             }
             {isDownloadingMatches === false &&
-                <Stack spacing={4}>
+                <Stack spacing={4} alignItems={"center"}>
                     <Typography variant="h2" align="center">
                         {riotId.current}
                     </Typography>
+                    {doDisplayErrorContent === false &&
+                            <Button
+                                className="bg-slate-500 my-4 text-4xl w-1/3"
+                                variant="contained"
+                                color="primary"
+                                onClick={updatePlayerData}
+                                disabled={isUpdating}
+                            >
+                                {isUpdating ? <CircularProgress /> : "Update Player Data"}
+                            </Button>
+                    }
                     <Typography variant="h4" align="center">
                         🚧 Viewing your statistics is still under construction! 🚧 <br />
-                        {doDisplayErrorContent === false && "Thanks for signing in! We're downloading your matches for when the stats page is ready."}
+                        {doDisplayErrorContent === false && "Thanks for signing in! Click the Update Player Data button for us to download your latest matches."}
                     </Typography>
                     <Typography variant="h5" align="center">
                         {"Check back later. (If I know you personally, I'll probably let you know when it's done.)"}

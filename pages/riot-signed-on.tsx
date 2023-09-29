@@ -20,7 +20,7 @@ export default function RiotSignedOnPage(props: RiotSignOnCallbackPageProps) {
                     Thanks for signing in, {props.gameName}#{props.tagLine}!
                 </Typography>
                 <Typography variant="h5" align="center">
-                    See your Valorant stats <Link href={`/val/${props.platform}/${props.gameName}/${props.tagLine}`}>here</Link>
+                    Check out <Link href={`/val/${props.platform}/${props.gameName}/${props.tagLine}`}>your Valorant page</Link>!
                 </Typography>
                 <Typography variant="h4" align="center">
                     {/* TODO: this link should instead point the user to their valorant stats page */}
