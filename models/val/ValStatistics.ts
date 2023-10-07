@@ -32,7 +32,7 @@ export class ValMatchStatistics {
     spikePlantMillis: number = 0; // Milliseconds into the round when the spike was planted
     spikeDefuseMillis: number = 0; // Milliseconds into the round when the spike was defused
     favoritePlantSites: Map<string, number> = new Map(); // plant_site -> number of times planted
-    
+
     // From player stats from round data
     damageTaken: number = 0;
     legShotsTaken: number = 0;
@@ -80,7 +80,7 @@ export class ValMatchStatistics {
             let result: Map<string, number> = new Map<string, number>();
             mapOne.forEach((value, key) => result.set(key, value));
             mapTwo.forEach((value, key) => {
-                if(result.has(key)) {
+                if (result.has(key)) {
                     result.set(key, (result.get(key) ?? 0) + value);
                 }
                 else {
@@ -151,7 +151,7 @@ export class ValStatistics {
     }
 
     calculateStatistics(mapIdFilterSet: Set<string> | null = null, queueIdFilterSet: Set<string> | null = null, versionFilterSet: Set<string> | null = null, seasonFilterSet: Set<string> | null = null) {
-        if(this.player === null || this.matches === null) {
+        if (this.player === null || this.matches === null) {
             return;
         }
 
@@ -167,8 +167,8 @@ export class ValStatistics {
         this.matchStatisticsByAgent = [];
         this.matchStatisticsByFriend = [];
 
-        for(let match of this.matches) {
-            
+        for (let match of this.matches) {
+
             // Update play counts
             const updateSetCount = (set: Record<string, number>, key: string) => {
                 set[key] = (set[key] === undefined ? 0 : set[key]) + 1;
@@ -178,20 +178,18 @@ export class ValStatistics {
             updateSetCount(this.queueIdPlayCount, match.json_data.info.queue_id);
             updateSetCount(this.versionPlayCount, match.json_data.info.game_version);
             updateSetCount(this.seasonPlayCount, match.json_data.info.season_id);
-            
-            console.log(mapIdFilterSet);
 
             // Filter out matches that don't match the filter
-            if(mapIdFilterSet?.has(match.json_data.info.map_url) === true) {
+            if (mapIdFilterSet?.has(match.json_data.info.map_url) === true) {
                 continue;
             }
-            if(queueIdFilterSet?.has(match.json_data.info.queue_id) === true) {
+            if (queueIdFilterSet?.has(match.json_data.info.queue_id) === true) {
                 continue;
             }
-            if(versionFilterSet?.has(match.json_data.info.game_version) === true) {
+            if (versionFilterSet?.has(match.json_data.info.game_version) === true) {
                 continue;
             }
-            if(seasonFilterSet?.has(match.json_data.info.season_id) === true) {
+            if (seasonFilterSet?.has(match.json_data.info.season_id) === true) {
                 continue;
             }
 
@@ -207,7 +205,7 @@ export class ValStatistics {
             matchStatistics.deaths = playerData.stats.deaths;
             matchStatistics.assists = playerData.stats.assists;
             matchStatistics.playtimeMillis = playerData.stats.playtime_millis;
-            if(playerData.stats.ability_casts !== undefined) {
+            if (playerData.stats.ability_casts !== undefined) {
                 matchStatistics.grenadeCasts = playerData.stats.ability_casts.grenade_casts;
                 matchStatistics.ability1Casts = playerData.stats.ability_casts.ability1_casts;
                 matchStatistics.ability2Casts = playerData.stats.ability_casts.ability2_casts;
@@ -216,11 +214,11 @@ export class ValStatistics {
             matchStatistics.roundsWon = teamData.rounds_won;
             matchStatistics.numPoints = teamData.num_points;
             matchStatistics.won = teamData.won ? 1 : 0;
-            
+
             // Also, look at each round
             const rounds = match.json_data.round_results;
 
-            for(let round of rounds) {
+            for (let round of rounds) {
 
                 // Find the player's stats for this round
                 const playerStatsForRound = round.player_stats.find((player) => player.puuid === playerData.puuid);
@@ -230,13 +228,13 @@ export class ValStatistics {
                 }
 
                 // Update spike plant / defuse stats
-                if(round.bomb_planter_puuid === playerData.puuid) {
+                if (round.bomb_planter_puuid === playerData.puuid) {
                     matchStatistics.spikesPlanted += 1;
                     matchStatistics.spikePlantMillis += round.plant_round_millis;
                     let sitePlantCount = matchStatistics.favoritePlantSites.get(round.plant_site) ?? 0;
                     matchStatistics.favoritePlantSites.set(round.plant_site, sitePlantCount + 1);
                 }
-                if(round.bomb_defuser_puuid === playerData.puuid) {
+                if (round.bomb_defuser_puuid === playerData.puuid) {
                     matchStatistics.spikesDefused += 1;
                     matchStatistics.spikeDefuseMillis += round.defuse_round_millis;
                 }
@@ -244,7 +242,7 @@ export class ValStatistics {
                 // Update damage taken stats
                 const allDamageInRound = round.player_stats.flatMap((player) => player.damage);
                 const damageDealtToPlayer = allDamageInRound.filter((damage) => damage.receiver === playerData.puuid);
-                for(let damageTaken of damageDealtToPlayer) {
+                for (let damageTaken of damageDealtToPlayer) {
                     matchStatistics.damageTaken += damageTaken.damage;
                     matchStatistics.legShotsTaken += damageTaken.legshots;
                     matchStatistics.bodyShotsTaken += damageTaken.bodyshots;
@@ -255,7 +253,7 @@ export class ValStatistics {
                 matchStatistics.spentCredits += playerStatsForRound.economy.spent;
 
                 // Update damage given stats
-                for(let damageGiven of playerStatsForRound.damage) {
+                for (let damageGiven of playerStatsForRound.damage) {
                     matchStatistics.damageGiven += damageGiven.damage;
                     matchStatistics.legShotsGiven += damageGiven.legshots;
                     matchStatistics.bodyShotsGiven += damageGiven.bodyshots;
@@ -263,11 +261,11 @@ export class ValStatistics {
                 }
 
                 // Update kill stats
-                for(let kill of playerStatsForRound.kills) {
-                    if(kill.assistant_puuids.length === 0) {
+                for (let kill of playerStatsForRound.kills) {
+                    if (kill.assistant_puuids.length === 0) {
                         matchStatistics.soloKills += 1;
                     }
-                    if(kill.finishing_damage.is_secondary_fire_mode === true) {
+                    if (kill.finishing_damage.is_secondary_fire_mode === true) {
                         matchStatistics.adsKills += 1;
                     }
                     let weaponKillCount = matchStatistics.weaponKills.get(kill.finishing_damage.damage_item) ?? 0;
@@ -275,25 +273,25 @@ export class ValStatistics {
                 }
 
                 // Skip the round-end-based stats collection if the player's team didn't win the round
-                if(teamData.won === false) {
+                if (teamData.won === false) {
                     continue;
                 }
 
                 // Update round-end-based stats
-                switch(round.round_ceremony) {
+                switch (round.round_ceremony) {
                     case "CeremonyClutch":
                         // If the player has the kill with the latest game_time_millis field of all kills in the round
                         const allKills = round.player_stats.flatMap((player) => player.kills);
                         const latestKill = allKills.reduce((latestKill, kill) => {
                             return (kill.game_time_millis > latestKill.game_time_millis) ? kill : latestKill;
                         });
-                        if(latestKill.killer_puuid === playerData.puuid) {
+                        if (latestKill.killer_puuid === playerData.puuid) {
                             matchStatistics.clutches += 1;
                         }
                         break;
                     case "CeremonyAce":
                         // If the player has 5 kills (or more) in the round
-                        if(playerStatsForRound.kills.length >= 5) {
+                        if (playerStatsForRound.kills.length >= 5) {
                             matchStatistics.aces += 1;
                         }
                         break;
@@ -319,7 +317,7 @@ export class ValStatistics {
 
             // Update played friends
             const teamMates = match.json_data.players.filter((player) => player.team_id === playerData.team_id && player.puuid !== playerData.puuid);
-            for(let teamMate of teamMates) {
+            for (let teamMate of teamMates) {
                 let friendPlayCount = matchStatistics.friendsPlayedWith.get(teamMate.puuid) ?? 0;
                 matchStatistics.friendsPlayedWith.set(teamMate.puuid, friendPlayCount + 1);
             }
@@ -333,8 +331,8 @@ export class ValStatistics {
         let matchStatisticsByAgent: ValMatchStatistics[] = [];
         this.aggregatedStatistics.agentsPlayed.forEach((value, key) => {
             let agentMatchStatistics = new ValMatchStatistics();
-            for(let matchStatistics of this.matchStatistics) {
-                if(matchStatistics.agentsPlayed.has(key)) {
+            for (let matchStatistics of this.matchStatistics) {
+                if (matchStatistics.agentsPlayed.has(key)) {
                     agentMatchStatistics = agentMatchStatistics.aggregateStatistics(matchStatistics);
                 }
             }
@@ -347,8 +345,8 @@ export class ValStatistics {
         let matchStatisticsByFriend: ValMatchStatistics[] = [];
         this.aggregatedStatistics.friendsPlayedWith.forEach((value, key) => {
             let friendMatchStatistics = new ValMatchStatistics();
-            for(let matchStatistics of this.matchStatistics) {
-                if(matchStatistics.friendsPlayedWith.has(key)) {
+            for (let matchStatistics of this.matchStatistics) {
+                if (matchStatistics.friendsPlayedWith.has(key)) {
                     friendMatchStatistics = friendMatchStatistics.aggregateStatistics(matchStatistics);
                 }
             }
