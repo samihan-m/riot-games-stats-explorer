@@ -27,7 +27,7 @@ export default function HeadingContent() {
                             <Link href="/lol" className="rounded bg-slate-800 hover:bg-blue-500 border-2 border-yellow-600">
                                 <Box sx={{ position: 'relative', width: "3.5rem", height: "3.5rem" }}>
                                     <Tooltip title="All LoL Regions" arrow>
-                                        <Image src="/lol-logo.png" alt="" fill />
+                                        <Image src="/lol-logo.png" alt="" fill sizes="100%"/>
                                     </Tooltip>
                                 </Box>
                             </Link>
@@ -43,7 +43,7 @@ export default function HeadingContent() {
                             <Link href="/val" className="rounded border-2 border-red-600 hover:bg-red-900">
                                 <Box sx={{ position: 'relative', width: "3.5rem", height: "3.5rem" }}>
                                     <Tooltip title="All Valo Regions" arrow>
-                                        <Image src="/valorant-logo.png" alt="" fill/>
+                                        <Image src="/valorant-logo.png" alt="" fill sizes="100%"/>
                                     </Tooltip>
                                 </Box>
                             </Link>
