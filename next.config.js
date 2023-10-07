@@ -10,12 +10,20 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
+      // LoL assets
       {
         protocol: "https",
         hostname: "raw.communitydragon.org",
         port: "",
         pathname: "/latest/game/assets/**"
       },
+      // Val assets
+      {
+        protocol: "https",
+        hostname: "media.valorant-api.com",
+        port: "",
+        pathname: "/**"
+      }
     ]
   }
 }

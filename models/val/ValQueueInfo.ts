@@ -12,17 +12,18 @@ export type ValQueueInfo = {
     assetPath: string,
 }
 
-export async function getAllQueueInfo(): Promise<ValQueueInfo[]> {
+export async function getAllValQueueInfo(): Promise<ValQueueInfo[]> {
     const queueInfoUrl = "https://valorant-api.com/v1/gamemodes/queues";
     let queueInfoResponse = await fetch(queueInfoUrl);
     if(queueInfoResponse.ok === false) {
         return defaultValQueueInfo;
     }
-    let queueInfo: ValQueueInfo[] = await queueInfoResponse.json();
+    let queueInfoResponseJson = await queueInfoResponse.json() as {status: number, data: ValQueueInfo[]};
+    let queueInfo = queueInfoResponseJson.data;
     return queueInfo;
 }
 
-export function getQueueInfo(queueUuid: string, allQueueInfo: ValQueueInfo[]): ValQueueInfo {
+export function getValQueueInfo(queueUuid: string, allQueueInfo: ValQueueInfo[]): ValQueueInfo {
     for(let queue of allQueueInfo) {
         if(queue.queueId === queueUuid) {
             return queue;

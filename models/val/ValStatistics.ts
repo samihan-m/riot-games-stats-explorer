@@ -1,8 +1,237 @@
+import { ValMatch } from "./ValMatch";
+import { MatchPlayerData, MatchTeamData } from "./ValMatchData";
+import { ValPlayer } from "./ValPlayer";
+export class ValStatistics {
+    player: ValPlayer | null;
+    matches: ValMatch[] | null;
+    gamesPlayed: number = 0;
+    mapIdPlayCount: Record<string, number> = {};
+    queueIdPlayCount: Record<string, number> = {};
+    versionPlayCount: Record<string, number> = {};
+    seasonPlayCount: Record<string, number> = {};
+    // TODO: Think further about what data types I want these statistics objects to be
+    agentStatistics: Record<string, AgentStatistics> = {};
+    friendStatistics: Record<string, FriendStatistics> = {};
+    statistics: Record<string, number> = {};
+
+    constructor(player: ValPlayer | null = null, matches: ValMatch[] | null = null) {
+        this.player = player;
+        this.matches = matches;
+        if (player === null || matches === null) {
+            return;
+        }
+        this.calculateStatistics();
+    }
+
+    calculateStatistics(mapIdFilterSet: Set<string> | null = null, queueIdFilterSet: Set<string> | null = null, versionFilterSet: Set<string> | null = null, seasonFilterSet: Set<string> | null = null) {
+        if(this.player === null || this.matches === null) {
+            return;
+        }
+
+        // Reset statistics
+        this.mapIdPlayCount = {};
+        this.queueIdPlayCount = {};
+        this.versionPlayCount = {};
+        this.seasonPlayCount = {};
+        this.agentStatistics = {};
+        this.friendStatistics = {};
+        this.statistics = {};
+
+
+        for(let match of this.matches) {
+            
+            // Update play counts
+            const updateSetCount = (set: Record<string, number>, key: string) => {
+                set[key] = (set[key] === undefined ? 0 : set[key]) + 1;
+            }
+
+            updateSetCount(this.mapIdPlayCount, match.json_data.info.map_url);
+            updateSetCount(this.queueIdPlayCount, match.json_data.info.queue_id);
+            updateSetCount(this.versionPlayCount, match.json_data.info.game_version);
+            updateSetCount(this.seasonPlayCount, match.json_data.info.season_id);
+            
+            // Filter out matches that don't match the filter
+            if(mapIdFilterSet?.has(match.json_data.info.map_url) === true) {
+                continue;
+            }
+            if(queueIdFilterSet?.has(match.json_data.info.queue_id) === true) {
+                continue;
+            }
+            if(versionFilterSet?.has(match.json_data.info.game_version) === true) {
+                continue;
+            }
+            if(seasonFilterSet?.has(match.json_data.info.season_id) === true) {
+                continue;
+            }
+
+
+            
+
+            this.gamesPlayed += 1;
+
+            // Update applicable statistics objects
+            const updateStatistics = (statistics: Record<string, number>, key: string, value: number) => {
+                statistics[key] = (statistics[key] === undefined ? 0 : statistics[key]) + value;
+            }
+
+            const playerData = match.json_data.players.find((player) => player.puuid === this.player?._id) as MatchPlayerData;
+            const teamData = match.json_data.teams.find((team) => team.id === playerData.team_id) as MatchTeamData;
+            
+            let matchStatistics: Record<string, number> = {};
+
+            const copyStatistics = (statisticsObject: object) => {
+                for(let [key, value] of Object.entries(statisticsObject)) {
+                    if(typeof value === "number") {
+                        matchStatistics[key] = value;
+                    }
+                    if(typeof value === "boolean") {
+                        // This is primarily to convert the "won" key from teamData to a 1 or 0
+                        matchStatistics[key] = value ? 1 : 0;
+                    }
+                    if(typeof value === "object") {
+                        // I commented this out because it made the column headers in the table too long - re-enable if it becomes necessary
+
+                        // Just in case any subkeys have the same name as a parent object's key, 
+                        // rename the subkey to be the parent object's key + "_" + subkey
+                        // let renamedObject: Record<string, any> = {};
+                        // for(let [subKey, subValue] of Object.entries(value)) {
+                        //     renamedObject[key + "_" + subKey] = subValue;
+                        // }
+                        // copyStatistics(renamedObject);
+                        
+                        copyStatistics(value);
+                    }
+                }
+            }
+
+            copyStatistics(playerData.stats);
+            copyStatistics(teamData);
+
+            // Add the match statistics to the appropriate objects
+
+            // Add them to total
+            for(let [key, value] of Object.entries(matchStatistics)) {
+                updateStatistics(this.statistics, key, value);
+            }
+            
+            // Add them to the appropriate agent statistics object, creating a new one if it doesn't exist
+            const updateAgentStatistics = (agentUuid: string, agentStatisticsFromMatch: Record<string, number>) => {
+                if(this.agentStatistics[agentUuid] === undefined) {
+                    this.agentStatistics[agentUuid] = new AgentStatistics(agentUuid, 1, agentStatisticsFromMatch);
+                    return;
+                }
+                this.agentStatistics[agentUuid].gamesPlayed += 1;
+                for(let [key, value] of Object.entries(agentStatisticsFromMatch)) {
+                    updateStatistics(this.agentStatistics[agentUuid].statistics, key, value);
+                }
+            }
+
+            updateAgentStatistics(playerData.character_id, matchStatistics);
+
+
+
+            // Add them to the appropriate friend statistics object, creating a new one if it doesn't exist
+
+            const updateFriendStatistics = (friendPuuid: string, friendName: string, friendStatisticsFromMatch: Record<string, number>) => {
+                if(this.friendStatistics[friendPuuid] === undefined) {
+                    this.friendStatistics[friendPuuid] = new FriendStatistics(friendPuuid, friendName, 1, friendStatisticsFromMatch);
+                    return;
+                }
+                this.friendStatistics[friendPuuid].gamesPlayed += 1;
+                this.friendStatistics[friendPuuid].friendRiotIds.add(friendName);
+                for(let [key, value] of Object.entries(friendStatisticsFromMatch)) {
+                    updateStatistics(this.friendStatistics[playerData.puuid].statistics, key, value);
+                }
+            }
+
+            const teammates = match.json_data.players.filter((player) => player.team_id === playerData.team_id);
+            for(let teammate of teammates) {
+                updateFriendStatistics(teammate.puuid, teammate.game_name, matchStatistics);
+            }
+
+
+            // Also, look at each round
+            const rounds = match.json_data.round_results;
+
+            for(let round of rounds) {
+                //TODO   
+            }
+
+        }
+
+        console.log("Finished calculating statistics")
+        console.log(this.statistics);
+    }
+};
+
+export class AgentStatistics {
+    // Tracks statistics for a single agent
+
+    agentId: string = "";
+    agentName: string = "";
+    gamesPlayed: number = 0;
+    statistics: Record<string, number> = {};
+
+    constructor(agentId: string = "", gamesPlayed: number = 0, statistics: Record<string, number> = {}) {
+        this.agentId = agentId;
+        this.gamesPlayed = gamesPlayed;
+        this.statistics = statistics;
+    }
+
+}
+
+export class FriendStatistics {
+    // Tracks statistics for a single "friend" (i.e. a player that the player has played with)
+
+    friendId: string = "";
+    friendRiotIds: Set<string> = new Set("");
+    gamesPlayed: number = 0;
+    statistics: Record<string, number> = {};
+
+    constructor(friendId: string = "", friendRiotId: string = "", gamesPlayed: number = 0, statistics: Record<string, number> = {}) {
+        this.friendId = friendId;
+        this.friendRiotIds = new Set(friendRiotId);
+        this.gamesPlayed = gamesPlayed;
+        this.statistics = statistics;
+    }
+}
+
+export class UtilityFunctions {
+
+    static getWinRate(statisticsObject: ValStatistics | AgentStatistics | FriendStatistics): number {
+        return (statisticsObject.statistics["won"] / statisticsObject.gamesPlayed);
+    }
+    
+    static getRoundWinRate(statisticsObject: ValStatistics | AgentStatistics | FriendStatistics): number {
+        return (statisticsObject.statistics["roundsWon"] / statisticsObject.statistics["roundsPlayed"]);
+    }
+
+    static getMostPlayedAgent(statisticsObject: ValStatistics): AgentStatistics {
+        // Looks through all the agent statistics objects and returns the one with the most games played
+        let mostPlayedAgentStats: AgentStatistics = new AgentStatistics();
+        for(let agent of Object.values(statisticsObject.agentStatistics)) {
+            if(agent.gamesPlayed > mostPlayedAgentStats.gamesPlayed) {
+                mostPlayedAgentStats = agent;
+            }
+        }
+        return mostPlayedAgentStats;
+    }
+
+    static getMostPlayedFriend(statisticsObject: ValStatistics): FriendStatistics {
+        // Looks through all the friend statistics objects and returns the one with the most games played
+        let mostPlayedFriendStats: FriendStatistics = new FriendStatistics();
+        for(let friend of Object.values(statisticsObject.friendStatistics)) {
+            if(friend.gamesPlayed > mostPlayedFriendStats.gamesPlayed) {
+                mostPlayedFriendStats = friend;
+            }
+        }
+        return mostPlayedFriendStats;
+    }
+}
+
 // import { ValMatch } from "./ValMatch";
 // import { PlayerDTO } from "./ValMatchData";
 // import { ValPlayer } from "./ValPlayer";
-
-export {}; // Adding this temporarily until I fix this file
 
 // // TODO: Remove all the redundancy from calculateStatistics().
 

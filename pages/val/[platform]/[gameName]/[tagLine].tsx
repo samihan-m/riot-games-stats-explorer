@@ -11,6 +11,7 @@ import { ValMatch } from "@/models/val/ValMatch";
 // import ValorantProfile from "@/components/common/ValorantProfile";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import ValorantProfile from "@/components/common/ValorantProfile";
 
 const { publicRuntimeConfig } = getConfig();
 const { apiUrl } = publicRuntimeConfig;
@@ -133,7 +134,7 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
             }
             {isDownloadingMatches === false &&
                 <Stack spacing={4} alignItems={"center"}>
-                    <Typography variant="h2" align="center">
+                    {/* <Typography variant="h2" align="center">
                         {riotId.current}
                     </Typography>
                     {doDisplayErrorContent === false &&
@@ -160,14 +161,14 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
                                 <p>{`So far, we recognize you as having played ${player?.match_ids.length} matches, and we've downloaded ${valMatches.length} of them.`}</p>
                             </Stack>
                         }
-                    </div>
-                    {/* <ValorantProfile
-                        searchedRiotId={riotId}
+                    </div> */}
+                    <ValorantProfile
+                        searchedRiotId={riotId.current}
                         playerData={player}
                         valMatches={valMatches}
                         updatePlayerDataCallback={updatePlayerData}
                         isCurrentlyUpdating={isUpdating}
-                    /> */}
+                    />
                 </Stack>
             }
             {doDisplayErrorContent &&

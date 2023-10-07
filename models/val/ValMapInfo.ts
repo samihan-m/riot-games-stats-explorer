@@ -32,24 +32,25 @@ export type ValMapInfo = {
 }
 
 export async function getAllValMapInfo(): Promise<ValMapInfo[]> {
-    const mapInfoUrl = "https://dash.valorant-api.com/endpoints/maps";
+    const mapInfoUrl = "https://valorant-api.com/v1/maps";
     let mapInfoResponse = await fetch(mapInfoUrl);
     if(mapInfoResponse.ok === false) {
         return defaultValMapInfo;
     }
-    let mapInfo: ValMapInfo[] = await mapInfoResponse.json();
+    let mapInfoResponseJson = await mapInfoResponse.json() as {status: number, data: ValMapInfo[]};
+    let mapInfo = mapInfoResponseJson.data;
     return mapInfo;
 }
 
-export function getValMapInfo(mapUuid: string, allMapInfo: ValMapInfo[]): ValMapInfo {
+export function getValMapInfo(mapUrl: string, allMapInfo: ValMapInfo[]): ValMapInfo {
     for(let map of allMapInfo) {
-        if(map.uuid === mapUuid) {
+        if(map.mapUrl === mapUrl) {
             return map;
         }
     }
     // Return a null map if we can't find the map
     const nullMap: ValMapInfo = {
-        uuid: mapUuid,
+        uuid: "",
         displayName: "Other",
         narrativeDescription: null,
         tacticalDescription: null,
@@ -58,7 +59,7 @@ export function getValMapInfo(mapUuid: string, allMapInfo: ValMapInfo[]): ValMap
         listViewIcon: "",
         splash: "",
         assetPath: "",
-        mapUrl: "",
+        mapUrl: mapUrl,
         xMultiplier: 0,
         yMultiplier: 0,
         xScalarToAdd: 0,

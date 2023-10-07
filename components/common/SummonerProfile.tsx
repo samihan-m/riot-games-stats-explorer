@@ -162,9 +162,27 @@ export default function SummonerProfile(props: SummonerProfileProps) {
         }
     }
 
+    let dateOfOldestMatch = useRef(new Date());
+    let dateOfNewestMatch = useRef(new Date());
+
     useEffect(() => {
         if (player !== null && lolMatches !== null) {
             setMatchYetToDownloadCount(player["lol_match_ids"].length - lolMatches.length);
+
+            // Get the oldest and newest match dates
+            // Need to ignore any broken matches (see: May 12th-13th connection issues leading to incomplete match objects being stored in match histories)
+            // If all matches are broken, then the oldest and newest match dates will be the same as the current date
+            // That's fine to me because if they have no valid matches then I'm fine with saying we've processed basically no matches
+
+            const oldestDefinedMatch = lolMatches.find((lolMatch) => lolMatch.json_data.info !== undefined);
+            const newestDefinedMatch = lolMatches.reverse().find((lolMatch) => lolMatch.json_data.info !== undefined);
+            if(oldestDefinedMatch !== undefined) {
+                dateOfOldestMatch.current = new Date(oldestDefinedMatch.json_data.info.start_millis);
+            }
+            if(newestDefinedMatch !== undefined) {
+                dateOfNewestMatch.current = new Date(newestDefinedMatch.json_data.info.start_millis);
+            }
+
             calculateStatistics();
         }
     }, [player, lolMatches, calculateStatistics]);
@@ -339,6 +357,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                                     fill
                                     quality={100}
                                     priority
+                                    sizes="100%"
                                 />
                             </div>
                         </div>
@@ -364,7 +383,7 @@ export default function SummonerProfile(props: SummonerProfileProps) {
                             </div>
                             <Box className="Statistics" sx={{ width: '100%' }}>
                                 <Stack direction="column" className="header">
-                                    <span className="subtitle center-text">Processed {lolMatches.length} games from {new Date(statistics.current.earliestGameTime).toLocaleDateString()} to {new Date(statistics.current.latestGameTime).toLocaleDateString()}.</span>
+                                    <span className="subtitle center-text">Processed {lolMatches.length} games from {dateOfOldestMatch.current.toLocaleDateString()} to {dateOfNewestMatch.current.toLocaleDateString()}.</span>
                                     <br />
                                 </Stack>
                                 <div className="center-text">

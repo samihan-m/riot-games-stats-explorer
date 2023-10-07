@@ -1,28 +1,508 @@
-// import { useCallback, useEffect, useState, useRef } from "react";
-// import { Box, Grid, Stack, Typography, Checkbox, FormControlLabel, FormGroup, FormLabel, Button } from "@mui/material";
-// import CircularProgress from "@mui/material/CircularProgress";
-// import Image from "next/image";
-// import { AgGridReact } from 'ag-grid-react';
-// import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
-// import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
-// import { ValPlayer } from "@/models/val/ValPlayer";
-// import { ValMatch } from "@/models/val/ValMatch";
-// import { ValStatistics } from "@/models/val/ValStatistics";
-// import { ValMapInfo, getAllValMapInfo } from "@/models/val/ValMapInfo";
-// import { defaultValMapInfo } from "@/models/val/DefaultValMapInfo";
-// import { ValQueueInfo, getAllQueueInfo } from "@/models/val/ValQueueInfo";
-// import { defaultValQueueInfo } from "@/models/val/DefaultValQueueInfo";
+import { defaultValMapInfo } from "@/models/val/DefaultValMapInfo";
+import { defaultValQueueInfo } from "@/models/val/DefaultValQueueInfo";
+import { ValMapInfo, getAllValMapInfo, getValMapInfo } from "@/models/val/ValMapInfo";
+import { ValMatch } from "@/models/val/ValMatch"
+import { ValPlayer } from "@/models/val/ValPlayer"
+import { ValQueueInfo, getAllValQueueInfo, getValQueueInfo } from "@/models/val/ValQueueInfo";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, Typography, Stack, Button, CircularProgress, Grid, FormGroup, FormLabel, FormControlLabel, Checkbox } from "@mui/material";
+import Image from "next/image";
+import { AgentStatistics, UtilityFunctions, ValStatistics } from "@/models/val/ValStatistics";
+import { AgGridReact } from "ag-grid-react";
+import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
+import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
+import { ValAgentInfo, getAgentName, getAllValAgentInfo } from "@/models/val/ValAgentInfo";
+import { defaultValAgentInfo } from "@/models/val/DefaultValAgentInfo";
 
-// Adding empty export for now - I need to rewrite all of this file though
-export {} ;
+type ValorantProfileProps = {
+    searchedRiotId: string,
+    playerData: ValPlayer | null,
+    valMatches: ValMatch[] | null,
+    updatePlayerDataCallback: () => Promise<void>,
+    isCurrentlyUpdating: boolean,
+}
 
-// type ValorantProfileProps = {
-//     searchedRiotId: string,
-//     playerData: ValPlayer | null,
-//     valMatches: ValMatch[] | null,
-//     updatePlayerDataCallback: () => Promise<void>,
-//     isCurrentlyUpdating: boolean,
-// }
+export default function ValorantProfile(props: ValorantProfileProps) {
+
+    const searchedRiotId = props.searchedRiotId;
+    const player = props.playerData;
+    const matches = props.valMatches;
+    const [matchYetToDownloadCount, setMatchYetToDownloadCount] = useState<number | null>(null);
+
+    // TODO: NYI
+    let statistics = useRef<ValStatistics>(new ValStatistics());
+    let tableColumns = useRef<Record<string, string | number | boolean>[]>([]);
+    const defaultColDef = {
+        sortable: true,
+        resizable: true,
+        width: 150,
+    };
+
+    let allValMapInfo = useRef<ValMapInfo[]>(defaultValMapInfo);
+    let allValQueueInfo = useRef<ValQueueInfo[]>(defaultValQueueInfo);
+    let allValAgentInfo = useRef<ValAgentInfo[]>(defaultValAgentInfo);
+
+    // Update with the latest map and queue info
+    useEffect(() => {
+        async function loadInfoConstants() {
+            allValMapInfo.current = await getAllValMapInfo();
+            allValQueueInfo.current = await getAllValQueueInfo();
+            allValAgentInfo.current = await getAllValAgentInfo();
+        }
+
+        loadInfoConstants();
+    }, []);
+
+    // Sets of IDs to filter out of the list of matches we're calculating stats for
+    const [mapIdFilterSet, setMapIdFilterSet] = useState<Set<string>>(new Set<string>());
+    const [queueIdFilterSet, setQueueIdFilterSet] = useState<Set<string>>(new Set<string>());
+    const [versionFilterSet, setVersionFilterSet] = useState<Set<string>>(new Set<string>());
+    const [seasonFilterSet, setSeasonFilterSet] = useState<Set<string>>(new Set<string>());
+
+    // To control which matches have their statistics table displayed
+    const [matchIdsSetToDetailedDisplay, setMatchIdsSetToDetailedDisplay] = useState<Set<string>>(new Set<string>());
+
+    const calculateStatistics = useCallback(() => {
+        // Ensure that we have a player and matches to calculate statistics for
+        if (player === null || matches === null) {
+            return;
+        }
+
+        statistics.current = new ValStatistics(player, matches);
+        rerenderTable();
+    }, [player, matches]);
+
+    // A modified statistics object that has a few additional fields to show in the table
+    let tableRowData = useRef<Record<string, any>[]>([]);
+    function rerenderTable() {
+        tableRowData.current = [];
+
+        for(let [agentUuid, agentStatsObject] of Object.entries(statistics.current.agentStatistics)) {
+            let agentKda = (
+                (agentStatsObject.statistics.kills+agentStatsObject.statistics.assists)/(agentStatsObject.statistics.deaths === 0 ? 1 : agentStatsObject.statistics.deaths)
+            ).toFixed(2);
+
+            let updatedStatisticsObject = {
+                ...agentStatsObject.statistics,
+                "agentName": allValAgentInfo.current.find(agentInfo => agentInfo.uuid === agentUuid)?.displayName as string,
+                "k/d/a": agentKda,
+            }
+
+            tableRowData.current.push(updatedStatisticsObject)
+        }
+
+        let statisticNameSet = new Set<string>();
+        for (let rowDataObject of tableRowData.current) {
+            for(let [key, value] of Object.entries(rowDataObject)) {
+                // Replace underscores with spaces to make the column names look nicer
+                let originalKey = key;
+                while (key.includes("_")) {
+                    key = key.replace("_", " ");
+                }
+                if (originalKey !== key) {
+                    rowDataObject[key] = rowDataObject[originalKey];
+                    delete rowDataObject[originalKey];
+                }
+                statisticNameSet.add(key);
+            }
+        }
+
+        tableColumns.current = [];
+        for (let key of Array.from(statisticNameSet.values()).sort()) {
+
+            let column: Record<string, string | boolean | number> = {
+                "field": key
+            };
+            if (key === "agentName") {
+                column["filter"] = true;
+                column["pinned"] = "left";
+                column["width"] = 170;
+            }
+            if (key === "gamesPlayed") {
+                column["pinned"] = "left";
+            }
+            if (key === "winRate") {
+                column["pinned"] = "left";
+            }
+            if (key === "k/d/a") {
+                column["pinned"] = "left";
+            }
+            tableColumns.current.push(column);
+        }
+    }
+
+    // To be updated once we can get the profile picture link from the player's matches
+    let profilePictureUrl = useRef("https://media.valorant-api.com/playercards/9fb348bc-41a0-91ad-8a3e-818035c4e561/smallart.png");
+    let dateOfOldestMatch = useRef(new Date());
+    let dateOfNewestMatch = useRef(new Date());
+
+    useEffect(() => {
+        if (player !== null && matches !== null) {
+            setMatchYetToDownloadCount(player.match_ids.length - matches.length);
+
+            console.log("Use effect triggered!")
+
+            if (matches.length > 0) {
+
+                // Get profile imagery from the most recent match
+                const mostRecentMatch = matches[matches.length - 1];
+                const playerData = mostRecentMatch.json_data.players.find((matchParticipant) => matchParticipant.puuid === player._id);
+                const playerCardUUID = playerData?.player_card_id;
+                profilePictureUrl.current = `https://media.valorant-api.com/playercards/${playerCardUUID}/smallart.png`
+
+                // Get the oldest and newest match dates
+                const oldestMatch = matches[0];
+                const newestMatch = matches[matches.length - 1];
+                dateOfOldestMatch.current = new Date(oldestMatch.json_data.info.start_millis);
+                dateOfNewestMatch.current = new Date(newestMatch.json_data.info.start_millis);
+            }
+
+            calculateStatistics();
+        }
+    }, [player, matches, calculateStatistics]);
+
+    function updateIdSet(set: Set<string>, id: string, isBoxChecked: boolean): Set<string> {
+        // Given a set of map/queue/version IDs, update it to include or exclude the given ID
+        // If isBoxChecked is true, that means we include it in the set
+        // If isBoxChecked is false, that means we exclude it from the set
+
+        let doFilterOutId = (isBoxChecked === false);
+
+        // Making a copy so that a different set object is modified
+        set = structuredClone(set);
+
+        if (doFilterOutId === true) {
+            set.add(id);
+        }
+        else {
+            set.delete(id);
+        }
+
+        return set;
+    }
+
+    function getMatchHistoryListing(match: ValMatch): React.ReactNode {
+        // Create the HTML for a single match in the list of match history
+
+        let playerData = match.json_data.players.find((matchParticipant) => matchParticipant.puuid === player?._id);
+
+        return (
+            // TODO: NYI
+            <></>
+        )
+    }
+
+    function getMatchHistoryListingStatsTable(match: ValMatch): React.ReactNode {
+        // Create the stats table for a match in the match history listing
+
+        let playerData = match.json_data.players.find((matchParticipant) => matchParticipant.puuid === player?._id);
+
+        return (
+            // TODO: NYI
+            <></>
+        )
+    }
+
+    function getRandomNumber() {
+        // Returns an integer between 0 and 100
+        let number = Number((Math.random() * 100).toFixed(0));
+        return number;
+    }
+
+    function getConditionalS(quantity: number): string {
+        // Returns "s" if the quantity is not 1, otherwise returns an empty string
+        if (quantity === 1) {
+            return "";
+        }
+        return "s";
+    }
+
+    return (
+        <Box sx={{ flexGrow: 1, width: "100%", maxWidth: "100%"}}>
+            {player !== null &&
+                <>
+                    {profilePictureUrl.current !== "" &&
+                        <div className="pb-4 w-32 h-32 relative my-0 mx-auto">
+                            <Image
+                                src={profilePictureUrl.current}
+                                alt="Profile picture"
+                                fill
+                                quality={100}
+                                priority
+                                sizes="100%"
+                            />
+                        </div>
+                    }
+                    <Typography variant="h3" component="h1" className="text-center pt-4">
+                        {player.game_name === null ? searchedRiotId : player.game_name}
+                    </Typography>
+                    {matches !== null &&
+                        <>
+                            {matchYetToDownloadCount !== null && matchYetToDownloadCount > 0 &&
+                                <Typography variant="body1" className="text-center">
+                                    We currently have {matches.length} of your {player.match_ids.length} matches saved.
+                                    <br />
+                                    The remaining {matchYetToDownloadCount} matches will be downloaded over time. Check back later!
+                                </Typography>
+                            }
+                            <Box sx={{ width: "100%", maxWidth: "100%"}} className="pb-8">
+                                <Typography className="text-center">
+                                    Processed {matches.length} games from {dateOfOldestMatch.current.toLocaleDateString()} to {dateOfNewestMatch.current.toLocaleDateString()}:
+                                </Typography>
+                                <Box className="text-center py-4">
+                                    <Button
+                                        className="bg-slate-500"
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={props.updatePlayerDataCallback}
+                                        disabled={props.isCurrentlyUpdating}
+                                    >
+                                        {props.isCurrentlyUpdating ? <CircularProgress /> : "Update Player Data"}
+                                    </Button>
+                                </Box>
+                                <Stack direction="column" className="pb-8">
+                                    <Typography variant="h6" component="h2">
+                                        Match Filters
+                                    </Typography>
+                                    <Typography variant="body1" component="span" className="italic">
+                                        Toggle which matches contribute to your displayed statistics.
+                                    </Typography>
+                                </Stack>
+                                <Grid className="h-60 border-2 border-white bg-gray-950 resize-y overflow-y-scroll" container spacing={3} columns={4}>
+                                    <Grid item xs={1}>
+                                        <FormGroup>
+                                            <FormLabel component="legend" className="text-white font-bold">Map Filters</FormLabel>
+                                            {Array.from(Object.keys(statistics.current.mapIdPlayCount).map(mapId => getValMapInfo(mapId, allValMapInfo.current)).map(mapInfo => (
+                                                // Note that the UUID field here corresponds to the map URL field in map info objects
+                                                <div key={mapInfo.uuid}>
+                                                    <FormControlLabel
+                                                        control={<Checkbox defaultChecked />}
+                                                        onChange={(e) => {
+                                                            let updatedMapIdFilterSet = updateIdSet(mapIdFilterSet, mapInfo.uuid, (e.target as HTMLInputElement).checked);
+                                                            statistics.current.calculateStatistics(updatedMapIdFilterSet, queueIdFilterSet, versionFilterSet);
+                                                            setMapIdFilterSet(updatedMapIdFilterSet);
+                                                            rerenderTable();
+                                                        }}
+                                                        // Required to index into the mapIdPlayCount object with URL because matches don't store the map ID, they store the map URL so stats are stored under the URL
+                                                        label={`${mapInfo.displayName} (${statistics.current.mapIdPlayCount[mapInfo.mapUrl]} game${getConditionalS(statistics.current.mapIdPlayCount[mapInfo.mapUrl])})`}
+                                                    />
+                                                </div>
+                                            )))}
+                                        </FormGroup>
+                                    </Grid>
+                                    <Grid item xs={1}>
+                                        <FormGroup>
+                                            <FormLabel component="legend" className="text-white font-bold">Queue Filters</FormLabel>
+                                            {Array.from(Object.keys(statistics.current.queueIdPlayCount).map(queueId => getValQueueInfo(queueId, allValQueueInfo.current)).map(queueInfo => (
+                                                <div key={queueInfo.queueId}>
+                                                    <FormControlLabel
+                                                        control={<Checkbox defaultChecked />}
+                                                        onChange={(e) => {
+                                                            let updatedQueueIdFilterSet = updateIdSet(queueIdFilterSet, queueInfo.queueId, (e.target as HTMLInputElement).checked);
+                                                            statistics.current.calculateStatistics(mapIdFilterSet, updatedQueueIdFilterSet, versionFilterSet);
+                                                            setQueueIdFilterSet(updatedQueueIdFilterSet);
+                                                            rerenderTable();
+                                                        }}
+                                                        label={`${queueInfo.dropdownText} (${statistics.current.queueIdPlayCount[queueInfo.queueId]} game${getConditionalS(statistics.current.queueIdPlayCount[queueInfo.queueId])})`}
+                                                    />
+                                                </div>
+                                            )))}
+                                        </FormGroup>
+                                    </Grid>
+                                    <Grid item xs={1}>
+                                        <FormGroup>
+                                            <FormLabel component="legend" className="text-white font-bold">Version Filters</FormLabel>
+                                            {Array.from(Object.keys(statistics.current.versionPlayCount).map(version => (
+                                                <div key={version}>
+                                                    <FormControlLabel
+                                                        control={<Checkbox defaultChecked />}
+                                                        onChange={(e) => {
+                                                            let updatedVersionFilterSet = updateIdSet(versionFilterSet, version, (e.target as HTMLInputElement).checked);
+                                                            statistics.current.calculateStatistics(mapIdFilterSet, queueIdFilterSet, updatedVersionFilterSet);
+                                                            setVersionFilterSet(updatedVersionFilterSet);
+                                                            rerenderTable();
+                                                        }}
+                                                        label={`${version} (${statistics.current.versionPlayCount[version]} game${getConditionalS(statistics.current.versionPlayCount[version])})`}
+                                                    />
+                                                </div>
+                                            )))}
+                                        </FormGroup>
+                                    </Grid>
+                                    <Grid item xs={1}>
+                                        <FormGroup>
+                                            <FormLabel component="legend" className="text-white font-bold">Season Filters</FormLabel>
+                                            {Array.from(Object.keys(statistics.current.seasonPlayCount).map(season => (
+                                                <div key={season}>
+                                                    <FormControlLabel
+                                                        control={<Checkbox defaultChecked />}
+                                                        onChange={(e) => {
+                                                            let updatedSeasonFilterSet = updateIdSet(seasonFilterSet, season, (e.target as HTMLInputElement).checked);
+                                                            statistics.current.calculateStatistics(mapIdFilterSet, queueIdFilterSet, versionFilterSet, updatedSeasonFilterSet);
+                                                            setSeasonFilterSet(updatedSeasonFilterSet);
+                                                            rerenderTable();
+                                                        }}
+                                                        label={`${season} (${statistics.current.seasonPlayCount[season]} game${getConditionalS(statistics.current.seasonPlayCount[season])})`}
+                                                    />
+                                                </div>
+                                            )))}
+                                        </FormGroup>
+                                    </Grid>
+                                </Grid>
+                                <Grid container rowSpacing={5} columnSpacing={{ xs: 1, sm: 2, md: 3 }} className="pt-8">
+                                    {/* 
+                                    Example stats from statistics:
+                                        {
+                                            "score": 16462,
+                                            "rounds_played": 132,
+                                            "kills": 52,
+                                            "deaths": 105,
+                                            "assists": 16,
+                                            "playtime_millis": 13174964,
+                                            "ability_casts_grenade_casts": 85,
+                                            "ability_casts_ability1_casts": 69,
+                                            "ability_casts_ability2_casts": 59,
+                                            "ability_casts_ultimate_casts": 7,
+                                            "won": 2,
+                                            "rounds_won": 56,
+                                            "num_points": 56
+                                        }
+                                    */}
+
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Win Count: {statistics.current.statistics["won"]}
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Hours Played: {
+                                                    (statistics.current.statistics["playtime_millis"] / 1000 / 60 / 60).toFixed(3)
+                                                }
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Kills: {statistics.current.statistics["kills"]}
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Total Rounds Played: {statistics.current.statistics["rounds_played"]}
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Ultimates Used: {statistics.current.statistics["ultimate_casts"]}
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Aces: (Coming Soon)
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                KDA: {
+                                                    ((
+                                                        statistics.current.statistics["kills"]
+                                                        +
+                                                        statistics.current.statistics["assists"]
+                                                    )
+                                                        /
+                                                        (statistics.current.statistics["deaths"] === 0 ? 1 : statistics.current.statistics["deaths"])
+                                                    ).toFixed(2)
+                                                }
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Most Played: {getAgentName(UtilityFunctions.getMostPlayedAgent(statistics.current).agentId, allValAgentInfo.current)} ({UtilityFunctions.getMostPlayedAgent(statistics.current).gamesPlayed} times)
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                            <Stack direction="column">
+                                <Typography variant="h6" component="h2">
+                                    Statistics Table
+                                </Typography>
+                                <Typography variant="body1" component="span" className="italic">
+                                    View all your stats! Resize column widths, click on a column header to sort, or hover the Champion Name column header and click on the ☰ button to search.
+                                </Typography>
+                                <Typography variant="h2" component="h2" className="text-center py-8">
+                                    🚧Stats table coming soon!🚧
+                                </Typography>
+                            </Stack>
+                        </>
+                    }
+                </>
+            }
+        </Box>
+    )
+}
 
 // export default function ValorantProfile(props: ValorantProfileProps) {
 //     const searchedSummonerName = props.searchedRiotId;
