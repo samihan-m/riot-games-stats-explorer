@@ -207,10 +207,12 @@ export class ValStatistics {
             matchStatistics.deaths = playerData.stats.deaths;
             matchStatistics.assists = playerData.stats.assists;
             matchStatistics.playtimeMillis = playerData.stats.playtime_millis;
-            matchStatistics.grenadeCasts = playerData.stats.ability_casts.grenade_casts;
-            matchStatistics.ability1Casts = playerData.stats.ability_casts.ability1_casts;
-            matchStatistics.ability2Casts = playerData.stats.ability_casts.ability2_casts;
-            matchStatistics.ultimateCasts = playerData.stats.ability_casts.ultimate_casts;
+            if(playerData.stats.ability_casts !== undefined) {
+                matchStatistics.grenadeCasts = playerData.stats.ability_casts.grenade_casts;
+                matchStatistics.ability1Casts = playerData.stats.ability_casts.ability1_casts;
+                matchStatistics.ability2Casts = playerData.stats.ability_casts.ability2_casts;
+                matchStatistics.ultimateCasts = playerData.stats.ability_casts.ultimate_casts;
+            }
             matchStatistics.roundsWon = teamData.rounds_won;
             matchStatistics.numPoints = teamData.num_points;
             matchStatistics.won = teamData.won ? 1 : 0;
