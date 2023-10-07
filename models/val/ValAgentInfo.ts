@@ -79,6 +79,15 @@ export async function getAllValAgentInfo(): Promise<ValAgentInfo[]> {
     return agentInfo;
 }
 
+export function getAgentUuidNameMap(allAgentInfo: ValAgentInfo[]): Map<string, string> {
+    // Returns a map of agent uuids to their names
+    let agentUuidNameMap = new Map<string, string>();
+    for(let agent of allAgentInfo) {
+        agentUuidNameMap.set(agent.uuid, agent.displayName);
+    }
+    return agentUuidNameMap;
+}
+
 export function getAgentName(agentUuid: string, allAgentInfo: ValAgentInfo[]): string {
     // Searches through the list of all agents to find the agent with the given uuid and returns their name
     let agent = allAgentInfo.find(agent => agent.uuid === agentUuid);

@@ -7,11 +7,11 @@ import { ValQueueInfo, getAllValQueueInfo, getValQueueInfo } from "@/models/val/
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Typography, Stack, Button, CircularProgress, Grid, FormGroup, FormLabel, FormControlLabel, Checkbox } from "@mui/material";
 import Image from "next/image";
-import { AgentStatistics, UtilityFunctions, ValStatistics } from "@/models/val/ValStatistics";
+import { ValMatchStatistics, ValStatistics } from "@/models/val/ValStatistics";
 import { AgGridReact } from "ag-grid-react";
 import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
 import 'ag-grid-community/styles/ag-theme-material.css'; // Optional theme CSS
-import { ValAgentInfo, getAgentName, getAllValAgentInfo } from "@/models/val/ValAgentInfo";
+import { ValAgentInfo, getAgentName, getAgentUuidNameMap, getAllValAgentInfo } from "@/models/val/ValAgentInfo";
 import { defaultValAgentInfo } from "@/models/val/DefaultValAgentInfo";
 
 type ValorantProfileProps = {
@@ -29,7 +29,6 @@ export default function ValorantProfile(props: ValorantProfileProps) {
     const matches = props.valMatches;
     const [matchYetToDownloadCount, setMatchYetToDownloadCount] = useState<number | null>(null);
 
-    // TODO: NYI
     let statistics = useRef<ValStatistics>(new ValStatistics());
     let tableColumns = useRef<Record<string, string | number | boolean>[]>([]);
     const defaultColDef = {
@@ -41,26 +40,31 @@ export default function ValorantProfile(props: ValorantProfileProps) {
     let allValMapInfo = useRef<ValMapInfo[]>(defaultValMapInfo);
     let allValQueueInfo = useRef<ValQueueInfo[]>(defaultValQueueInfo);
     let allValAgentInfo = useRef<ValAgentInfo[]>(defaultValAgentInfo);
+    let valAgentUuidToNameMap = useRef<Map<string, string>>(getAgentUuidNameMap(defaultValAgentInfo))
 
     // Update with the latest map and queue info
     useEffect(() => {
         async function loadInfoConstants() {
             allValMapInfo.current = await getAllValMapInfo();
             allValQueueInfo.current = await getAllValQueueInfo();
-            allValAgentInfo.current = await getAllValAgentInfo();
+            let latestValAgentInfo = await getAllValAgentInfo();
+            allValAgentInfo.current = latestValAgentInfo;
+            valAgentUuidToNameMap.current = getAgentUuidNameMap(latestValAgentInfo);
         }
 
         loadInfoConstants();
     }, []);
 
     // Sets of IDs to filter out of the list of matches we're calculating stats for
-    const [mapIdFilterSet, setMapIdFilterSet] = useState<Set<string>>(new Set<string>());
+    const [mapUrlFilterSet, setMapUrlFilterSet] = useState<Set<string>>(new Set<string>());
     const [queueIdFilterSet, setQueueIdFilterSet] = useState<Set<string>>(new Set<string>());
     const [versionFilterSet, setVersionFilterSet] = useState<Set<string>>(new Set<string>());
     const [seasonFilterSet, setSeasonFilterSet] = useState<Set<string>>(new Set<string>());
 
     // To control which matches have their statistics table displayed
     const [matchIdsSetToDetailedDisplay, setMatchIdsSetToDetailedDisplay] = useState<Set<string>>(new Set<string>());
+
+    const mostPlayedAgentUuid = useRef<string>("");
 
     const calculateStatistics = useCallback(() => {
         // Ensure that we have a player and matches to calculate statistics for
@@ -69,6 +73,9 @@ export default function ValorantProfile(props: ValorantProfileProps) {
         }
 
         statistics.current = new ValStatistics(player, matches);
+        if(statistics.current.matchStatisticsByAgent.length > 0) {
+            mostPlayedAgentUuid.current = Array.from(statistics.current.matchStatisticsByAgent[0].agentsPlayed.keys())[0];
+        }
         rerenderTable();
     }, [player, matches]);
 
@@ -77,55 +84,46 @@ export default function ValorantProfile(props: ValorantProfileProps) {
     function rerenderTable() {
         tableRowData.current = [];
 
-        for(let [agentUuid, agentStatsObject] of Object.entries(statistics.current.agentStatistics)) {
-            let agentKda = (
-                (agentStatsObject.statistics.kills+agentStatsObject.statistics.assists)/(agentStatsObject.statistics.deaths === 0 ? 1 : agentStatsObject.statistics.deaths)
-            ).toFixed(2);
-
-            let updatedStatisticsObject = {
-                ...agentStatsObject.statistics,
-                "agentName": allValAgentInfo.current.find(agentInfo => agentInfo.uuid === agentUuid)?.displayName as string,
-                "k/d/a": agentKda,
-            }
-
-            tableRowData.current.push(updatedStatisticsObject)
-        }
-
-        let statisticNameSet = new Set<string>();
-        for (let rowDataObject of tableRowData.current) {
-            for(let [key, value] of Object.entries(rowDataObject)) {
-                // Replace underscores with spaces to make the column names look nicer
-                let originalKey = key;
-                while (key.includes("_")) {
-                    key = key.replace("_", " ");
+        // Get the list of possible keys
+        let statisticNameSet = new Set<string>(
+            ["agent", "winRate", "k/d/a"]
+        );
+        for (let matchStatObj of statistics.current.matchStatisticsByAgent) {
+            let mostPlayedAgentId = Array.from(matchStatObj.agentsPlayed.keys())[0];
+            let newTableRow: Record<string, any> = {
+                "agent": getAgentName(mostPlayedAgentId, allValAgentInfo.current),
+                "winRate": ((matchStatObj.won / matchStatObj.gamesPlayed)*100).toFixed(3) + "%",
+                "k/d/a": ((matchStatObj.kills + matchStatObj.assists) / (matchStatObj.deaths === 0 ? 1 : matchStatObj.deaths)).toFixed(3),
+            };
+            for (let [key, value] of Object.entries(matchStatObj)) {
+                if(typeof value === "number") {
+                    statisticNameSet.add(key);
+                    newTableRow[key] = value;
                 }
-                if (originalKey !== key) {
-                    rowDataObject[key] = rowDataObject[originalKey];
-                    delete rowDataObject[originalKey];
-                }
-                statisticNameSet.add(key);
             }
+            tableRowData.current.push(newTableRow);
         }
-
+        
         tableColumns.current = [];
         for (let key of Array.from(statisticNameSet.values()).sort()) {
-
             let column: Record<string, string | boolean | number> = {
                 "field": key
             };
-            if (key === "agentName") {
+            if (key === "agent") {
                 column["filter"] = true;
                 column["pinned"] = "left";
-                column["width"] = 170;
+                column["width"] = 120;
             }
             if (key === "gamesPlayed") {
                 column["pinned"] = "left";
+                column["width"] = 110;
             }
             if (key === "winRate") {
                 column["pinned"] = "left";
             }
             if (key === "k/d/a") {
                 column["pinned"] = "left";
+                column["width"] = 90;
             }
             tableColumns.current.push(column);
         }
@@ -272,15 +270,14 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     <Grid item xs={1}>
                                         <FormGroup>
                                             <FormLabel component="legend" className="text-white font-bold">Map Filters</FormLabel>
-                                            {Array.from(Object.keys(statistics.current.mapIdPlayCount).map(mapId => getValMapInfo(mapId, allValMapInfo.current)).map(mapInfo => (
-                                                // Note that the UUID field here corresponds to the map URL field in map info objects
+                                            {Array.from(Object.keys(statistics.current.mapIdPlayCount).map(mapUrl => getValMapInfo(mapUrl, allValMapInfo.current)).map(mapInfo => (
                                                 <div key={mapInfo.uuid}>
                                                     <FormControlLabel
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
-                                                            let updatedMapIdFilterSet = updateIdSet(mapIdFilterSet, mapInfo.uuid, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(updatedMapIdFilterSet, queueIdFilterSet, versionFilterSet);
-                                                            setMapIdFilterSet(updatedMapIdFilterSet);
+                                                            let updatedMapUrlFilterSet = updateIdSet(mapUrlFilterSet, mapInfo.mapUrl, (e.target as HTMLInputElement).checked);
+                                                            statistics.current.calculateStatistics(updatedMapUrlFilterSet, queueIdFilterSet, versionFilterSet);
+                                                            setMapUrlFilterSet(updatedMapUrlFilterSet);
                                                             rerenderTable();
                                                         }}
                                                         // Required to index into the mapIdPlayCount object with URL because matches don't store the map ID, they store the map URL so stats are stored under the URL
@@ -299,7 +296,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedQueueIdFilterSet = updateIdSet(queueIdFilterSet, queueInfo.queueId, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(mapIdFilterSet, updatedQueueIdFilterSet, versionFilterSet);
+                                                            statistics.current.calculateStatistics(mapUrlFilterSet, updatedQueueIdFilterSet, versionFilterSet);
                                                             setQueueIdFilterSet(updatedQueueIdFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -318,7 +315,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedVersionFilterSet = updateIdSet(versionFilterSet, version, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(mapIdFilterSet, queueIdFilterSet, updatedVersionFilterSet);
+                                                            statistics.current.calculateStatistics(mapUrlFilterSet, queueIdFilterSet, updatedVersionFilterSet);
                                                             setVersionFilterSet(updatedVersionFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -337,7 +334,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                                         control={<Checkbox defaultChecked />}
                                                         onChange={(e) => {
                                                             let updatedSeasonFilterSet = updateIdSet(seasonFilterSet, season, (e.target as HTMLInputElement).checked);
-                                                            statistics.current.calculateStatistics(mapIdFilterSet, queueIdFilterSet, versionFilterSet, updatedSeasonFilterSet);
+                                                            statistics.current.calculateStatistics(mapUrlFilterSet, queueIdFilterSet, versionFilterSet, updatedSeasonFilterSet);
                                                             setSeasonFilterSet(updatedSeasonFilterSet);
                                                             rerenderTable();
                                                         }}
@@ -349,29 +346,10 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     </Grid>
                                 </Grid>
                                 <Grid container rowSpacing={5} columnSpacing={{ xs: 1, sm: 2, md: 3 }} className="pt-8">
-                                    {/* 
-                                    Example stats from statistics:
-                                        {
-                                            "score": 16462,
-                                            "rounds_played": 132,
-                                            "kills": 52,
-                                            "deaths": 105,
-                                            "assists": 16,
-                                            "playtime_millis": 13174964,
-                                            "ability_casts_grenade_casts": 85,
-                                            "ability_casts_ability1_casts": 69,
-                                            "ability_casts_ability2_casts": 59,
-                                            "ability_casts_ultimate_casts": 7,
-                                            "won": 2,
-                                            "rounds_won": 56,
-                                            "num_points": 56
-                                        }
-                                    */}
-
                                     <Grid item xs={6}>
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
-                                                Win Count: {statistics.current.statistics["won"]}
+                                                Win Count: {statistics.current.aggregatedStatistics.won}
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
                                                 <Typography variant="body2" component="span">
@@ -385,7 +363,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
                                                 Hours Played: {
-                                                    (statistics.current.statistics["playtime_millis"] / 1000 / 60 / 60).toFixed(3)
+                                                    (statistics.current.aggregatedStatistics.playtimeMillis / 1000 / 60 / 60).toFixed(3)
                                                 }
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
@@ -399,7 +377,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     <Grid item xs={6}>
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
-                                                Kills: {statistics.current.statistics["kills"]}
+                                                Kills: {statistics.current.aggregatedStatistics.kills}
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
                                                 <Typography variant="body2" component="span">
@@ -412,7 +390,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     <Grid item xs={6}>
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
-                                                Total Rounds Played: {statistics.current.statistics["rounds_played"]}
+                                                Total Rounds Played: {statistics.current.aggregatedStatistics.roundsPlayed}
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
                                                 <Typography variant="body2" component="span">
@@ -425,7 +403,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     <Grid item xs={6}>
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
-                                                Ultimates Used: {statistics.current.statistics["ultimate_casts"]}
+                                                Spikes Planted: {statistics.current.aggregatedStatistics.spikesPlanted}
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
                                                 <Typography variant="body2" component="span">
@@ -438,7 +416,33 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     <Grid item xs={6}>
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
-                                                Aces: (Coming Soon)
+                                                Spikes Defused: {statistics.current.aggregatedStatistics.spikesDefused}
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Ultimates Used: {statistics.current.aggregatedStatistics.ultimateCasts}
+                                            </Typography>
+                                            {getRandomNumber() % 3 === 0 ?
+                                                <Typography variant="body2" component="span">
+                                                    Wow!
+                                                </Typography> :
+                                                ""
+                                            }
+                                        </Stack>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Stack direction="column" className="text-center">
+                                            <Typography variant="h4" component="span">
+                                                Aces: {statistics.current.aggregatedStatistics.aces}
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
                                                 <Typography variant="body2" component="span">
@@ -453,12 +457,12 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                             <Typography variant="h4" component="span">
                                                 KDA: {
                                                     ((
-                                                        statistics.current.statistics["kills"]
+                                                        statistics.current.aggregatedStatistics.kills
                                                         +
-                                                        statistics.current.statistics["assists"]
+                                                        statistics.current.aggregatedStatistics.assists
                                                     )
                                                         /
-                                                        (statistics.current.statistics["deaths"] === 0 ? 1 : statistics.current.statistics["deaths"])
+                                                        (statistics.current.aggregatedStatistics.deaths === 0 ? 1 : statistics.current.aggregatedStatistics.deaths)
                                                     ).toFixed(2)
                                                 }
                                             </Typography>
@@ -473,7 +477,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                     <Grid item xs={6}>
                                         <Stack direction="column" className="text-center">
                                             <Typography variant="h4" component="span">
-                                                Most Played: {getAgentName(UtilityFunctions.getMostPlayedAgent(statistics.current).agentId, allValAgentInfo.current)} ({UtilityFunctions.getMostPlayedAgent(statistics.current).gamesPlayed} times)
+                                                Most Played: {valAgentUuidToNameMap.current.get(mostPlayedAgentUuid.current)} ({statistics.current.aggregatedStatistics.agentsPlayed.get(mostPlayedAgentUuid.current)} times)
                                             </Typography>
                                             {getRandomNumber() % 3 === 0 ?
                                                 <Typography variant="body2" component="span">
@@ -492,10 +496,17 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                 <Typography variant="body1" component="span" className="italic">
                                     View all your stats! Resize column widths, click on a column header to sort, or hover the Champion Name column header and click on the ☰ button to search.
                                 </Typography>
-                                <Typography variant="h2" component="h2" className="text-center py-8">
+                                {/* <Typography variant="h2" component="h2" className="text-center py-8">
                                     🚧Stats table coming soon!🚧
-                                </Typography>
+                                </Typography> */}
                             </Stack>
+                            <Box style={{ height: 600 }}>
+                                 <AgGridReact className="ag-theme-material"
+                                    rowData={tableRowData.current}
+                                    columnDefs={tableColumns.current}
+                                    defaultColDef={defaultColDef}
+                                ></AgGridReact>
+                            </Box>
                         </>
                     }
                 </>
