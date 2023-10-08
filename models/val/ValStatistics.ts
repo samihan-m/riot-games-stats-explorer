@@ -226,17 +226,19 @@ export class ValStatistics {
                 const playerData = match.json_data.players.find((player) => player.puuid === matchParticipant.puuid) as MatchPlayerData;
                 const teamData = match.json_data.teams.find((team) => team.id === playerData.team_id) as MatchTeamData;
 
-                matchStatistics.score = playerData.stats.score;
-                matchStatistics.roundsPlayed = playerData.stats.rounds_played;
-                matchStatistics.kills = playerData.stats.kills;
-                matchStatistics.deaths = playerData.stats.deaths;
-                matchStatistics.assists = playerData.stats.assists;
-                matchStatistics.playtimeMillis = playerData.stats.playtime_millis;
-                if (playerData.stats.ability_casts !== undefined) {
-                    matchStatistics.grenadeCasts = playerData.stats.ability_casts.grenade_casts;
-                    matchStatistics.ability1Casts = playerData.stats.ability_casts.ability1_casts;
-                    matchStatistics.ability2Casts = playerData.stats.ability_casts.ability2_casts;
-                    matchStatistics.ultimateCasts = playerData.stats.ability_casts.ultimate_casts;
+                if(playerData.stats !== undefined) {
+                    matchStatistics.score = playerData.stats.score;
+                    matchStatistics.roundsPlayed = playerData.stats.rounds_played;
+                    matchStatistics.kills = playerData.stats.kills;
+                    matchStatistics.deaths = playerData.stats.deaths;
+                    matchStatistics.assists = playerData.stats.assists;
+                    matchStatistics.playtimeMillis = playerData.stats.playtime_millis;
+                    if (playerData.stats.ability_casts !== undefined) {
+                        matchStatistics.grenadeCasts = playerData.stats.ability_casts.grenade_casts;
+                        matchStatistics.ability1Casts = playerData.stats.ability_casts.ability1_casts;
+                        matchStatistics.ability2Casts = playerData.stats.ability_casts.ability2_casts;
+                        matchStatistics.ultimateCasts = playerData.stats.ability_casts.ultimate_casts;
+                    }
                 }
                 matchStatistics.roundsWon = teamData.rounds_won;
                 matchStatistics.numPoints = teamData.num_points;
