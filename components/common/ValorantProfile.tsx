@@ -618,25 +618,25 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                             </Stack>
                         </>
                     }
+                    <Stack direction="column" className="pt-8">
+                        <Typography variant="h6" component="h2">
+                            Match History
+                        </Typography>
+                        <Typography variant="body1" component="span" className="italic">
+                            {"A list of every match you've played, in chronological order."}
+                        </Typography>
+                        <Stack direction="column">
+                            {matches !== null && matches.map((match, index) => {
+                                return (
+                                    <Box key={index}>
+                                        {getMatchHistoryListing(match)}
+                                    </Box>
+                                )
+                            })}
+                        </Stack>
+                    </Stack>
                 </>
             }
-            <Stack direction="column" className="pt-8">
-                <Typography variant="h6" component="h2">
-                    Match History
-                </Typography>
-                <Typography variant="body1" component="span" className="italic">
-                    {"A list of every match you've played, in chronological order."}
-                </Typography>
-                <Stack direction="column">
-                    {matches !== null && matches.map((match, index) => {
-                        return (
-                            <Box key={index}>
-                                {getMatchHistoryListing(match)}
-                            </Box>
-                        )
-                    })}
-                </Stack>
-            </Stack>
         </Box >
     )
 }
