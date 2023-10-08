@@ -240,10 +240,12 @@ export class ValStatistics {
                         matchStatistics.ultimateCasts = playerData.stats.ability_casts.ultimate_casts;
                     }
                 }
-                matchStatistics.roundsWon = teamData.rounds_won;
-                matchStatistics.numPoints = teamData.num_points;
-                matchStatistics.won = teamData.won ? 1 : 0;
-
+                if(teamData !== undefined) {
+                    matchStatistics.roundsWon = teamData.rounds_won;
+                    matchStatistics.numPoints = teamData.num_points;
+                    matchStatistics.won = teamData.won ? 1 : 0;
+                }
+                
                 // Also, look at each round
                 const rounds = match.json_data.round_results;
 
@@ -302,7 +304,7 @@ export class ValStatistics {
                     }
 
                     // Skip the round-end-based stats collection if the player's team didn't win the round
-                    if (teamData.won === false) {
+                    if (teamData === undefined || teamData.won === false) {
                         continue;
                     }
 
