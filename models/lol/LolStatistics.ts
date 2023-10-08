@@ -254,6 +254,11 @@ export class LolStatistics {
                 }
             }
             playerInformation = playerInformation as Participant;
+            if(playerInformation === null) {
+                // This happens sometimes on initial page load
+                console.log("Player information was null for match " + match._id);
+                continue;
+            }
 
 
             // Update champion specific statistics

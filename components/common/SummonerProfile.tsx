@@ -228,6 +228,9 @@ export default function SummonerProfile(props: SummonerProfileProps) {
         }
 
         let playerData: Participant = lolMatch.json_data.info.participants.find((participant) => participant.puuid === (player as Player)._id) as Participant;
+        if(playerData === undefined) {
+            return <></>;
+        }
 
         return (
             <Stack key={lolMatch.json_data.id}>
