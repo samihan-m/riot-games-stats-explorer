@@ -23,7 +23,8 @@ export const getServerSideProps: GetServerSideProps<ValPlayerPageProps> = async 
     console.log(playerInfoEndpointUrl);
     if(res.ok === false) {
         console.log(res.status);
-        const errorData: RequestError = await res.json();
+        let errorData: RequestError = await res.json();
+        errorData.status_code = res.status;
         // Possible values:
         // 400: Bad request (riotId is invalid)
         // 404: Player not found

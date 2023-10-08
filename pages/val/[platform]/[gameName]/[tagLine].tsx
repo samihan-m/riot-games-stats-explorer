@@ -12,6 +12,7 @@ import { ValMatch } from "@/models/val/ValMatch";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import ValorantProfile from "@/components/common/ValorantProfile";
+import { error } from "console";
 
 const { publicRuntimeConfig } = getConfig();
 const { apiUrl } = publicRuntimeConfig;
@@ -53,7 +54,7 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
         setIsDownloadingMatches(false);
     }, []);
 
-    const updatePlayerData = useCallback(async() => {
+    const updatePlayerData = useCallback(async () => {
         if (player === null) {
             return;
         }
@@ -74,7 +75,7 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
             // 422: Invalid platform
             // 429: Rate limit exceeded - wait a bit before trying to update the player again
             console.log(errorData);
-            if(res.status === 429) {
+            if (res.status === 429) {
                 alert(errorData.detail);
             }
             else {
@@ -93,13 +94,13 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
     }, [player, downloadValMatches]);
 
     useEffect(() => {
-        if(router.isReady === false) {
+        if (router.isReady === false) {
             // On initial page load, the router.query object will be empty for a tiny bit.
             // This is to prevent the page from loading without the appropriate info from the query object.
             // See https://github.com/vercel/next.js/discussions/12661#discussioncomment-360764
             return;
         }
-        
+
         if (player === null) {
             return;
         }
@@ -113,7 +114,7 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
         const latestTagLine = playerData.tag_line;
         const latestPlatform = playerData.platform;
 
-        if(latestPlatform !== platform || latestGameName !== gameName || latestTagLine !== tagLine) {
+        if (latestPlatform !== platform || latestGameName !== gameName || latestTagLine !== tagLine) {
             // The player data we used to navigate here is outdated, so we need to update the URL
             window.history.replaceState({}, "", `/val/${latestPlatform}/${latestGameName}/${latestTagLine}`);
         }
@@ -145,20 +146,28 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
             }
             {doDisplayErrorContent &&
                 <Stack direction={"column"} spacing={1} className="text-red-600">
-                    <Typography variant="subtitle1" align="center">
-                        {errorMessage + " "} {/* Adding a space here because otherwise the error message and the following line have no space in between.*/}
-                        <br/>
-                        Try searching for a different name or on a different region.
+                    <Typography variant="h2" component="h1" align="center">
+                        Error
                     </Typography>
-                    <Typography variant="h6" align="center" className="text-white">
-                        {"If this is you and you want to view your stats, feel free to give us access by signing in with your Riot ID."}
+                    <Typography variant="h4" align="center" className="py-4">
+                        {props.error?.status_code === 404 &&
+                            <>
+                                {"Player not found. Either no player exists with the name or ID, or we don't have access to display their data."}
+                                <br />
+                                {"Try searching for a different name or on a different region."}
+                            </>
+                        }
+                        {(props.error?.status_code === undefined || props.error?.status_code !== 404) && errorMessage + " "} {/* Adding a space here because otherwise the error message and the following line have no space in between.*/}
+                    </Typography>
+                    <Typography variant="h4" align="center" className="text-white py-4">
+                        {"If you're expecting to see your profile here, feel free to give us access by signing in with your Riot ID."}
                     </Typography>
                     <Link href="/riot-sign-on" className="mt-2 self-center text-xl bg-red-600 border-4 border-red-700 rounded-md pt-4 pb-4 pl-8 pr-8 text-white underline decoration-white hover:bg-red-500 hover:border-red-600">Sign in with Riot ID</Link>
                 </Stack>
             }
-            <CustomFooter />  
+            <CustomFooter />
         </CustomHeadLayout>
-        
+
     )
 }
 
@@ -171,9 +180,10 @@ export const getServerSideProps: GetServerSideProps<ValPlayerPageProps> = async 
     // The riotId only contains the name, not the tagline, so we need to get that
     const playerInfoEndpointUrl = `${apiUrl}/val/player/${platform}/${gameName}/${tagLine}`;
     const res = await fetch(playerInfoEndpointUrl);
-    if(res.ok === false) {
+    if (res.ok === false) {
         console.log(res.status);
-        const errorData: RequestError = await res.json();
+        let errorData: RequestError = await res.json();
+        errorData.status_code = res.status;
         // Possible values:
         // 400: Bad request (riotId is invalid)
         // 404: Player not found
@@ -184,7 +194,7 @@ export const getServerSideProps: GetServerSideProps<ValPlayerPageProps> = async 
         const playerData: ValPlayer = await res.json();
         props.playerData = playerData;
     }
-    
+
     return {
         props
     }

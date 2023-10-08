@@ -594,7 +594,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                         <Stack direction="column">
                                             <Typography variant="body1" component="div">
                                                 With your friend, you played {friendStatsObj.agentsPlayed.size} unique agent{getConditionalS(friendStatsObj.agentsPlayed.size)}.
-                                                <br/>
+                                                <br />
                                                 You really liked playing
                                                 <Typography component="span" className="text-fuchsia-500">
                                                     {" " + getAgentName(getFirstElement(friendStatsObj.agentsPlayed) as string, allValAgentInfo.current) + " "}
@@ -605,7 +605,7 @@ export default function ValorantProfile(props: ValorantProfileProps) {
                                         <Stack direction="column">
                                             <Typography variant="body1" component="div">
                                                 With you, your friend played {getFriendStats(friendStatsObj).agentsPlayed.size} unique agent{getConditionalS(getFriendStats(friendStatsObj).agentsPlayed.size)}.
-                                                <br/>
+                                                <br />
                                                 They really liked playing
                                                 <Typography component="span" className="text-fuchsia-500">
                                                     {" " + getAgentName(getFirstElement(getFriendStats(friendStatsObj).agentsPlayed) as string, allValAgentInfo.current) + " "}

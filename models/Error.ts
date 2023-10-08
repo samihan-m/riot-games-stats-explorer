@@ -1,4 +1,5 @@
 export type RequestError = {
     response: Response,
-    detail: string
+    detail: string,
+    status_code: number | undefined,
 }
