@@ -40,7 +40,7 @@ export default function LolPlayerPage(props: LolPlayerPageProps) {
 
         let downloadedLolMatches: LolMatch[];
 
-        const matchesEndpointUrl = `${apiUrl}/lol-matches/${platform}/${puuid}`;
+        const matchesEndpointUrl = `${apiUrl}/lol/matches/${platform}/${puuid}`;
         console.log(`Making request to download matches from ${matchesEndpointUrl}`)
         const res = await fetch(matchesEndpointUrl);
         console.log("Received response from server, awaiting .json() call..")

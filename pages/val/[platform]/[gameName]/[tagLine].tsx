@@ -40,7 +40,7 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
 
         let downloadedValMatches: ValMatch[];
 
-        const matchesEndpointUrl = `${apiUrl}/val-matches/${platform}/${puuid}`;
+        const matchesEndpointUrl = `${apiUrl}/val/matches/${platform}/${puuid}`;
         console.log(`Making request to download matches from ${matchesEndpointUrl}`);
         const res = await fetch(matchesEndpointUrl);
         console.log("Received response from server, awaiting .json() call..");
