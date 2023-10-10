@@ -363,7 +363,11 @@ export class ValStatistics {
             }
         }
 
-        let currentUserStatistics = this.aggregatedStatisticsForAllParticipants.get(this.player._id) as ValMatchStatistics;
+        let currentUserStatistics = this.aggregatedStatisticsForAllParticipants.get(this.player._id);
+        if(currentUserStatistics === undefined) {
+            currentUserStatistics = new ValMatchStatistics();
+        }
+
         this.aggregatedStatistics = currentUserStatistics;
 
         // Pull out every match statistic object per agent and sort them by games played
