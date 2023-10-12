@@ -51,7 +51,7 @@ export default function ValorantPlayerSearch(props: ValorantPlayerSearchProps) {
                 <Stack direction="row" spacing={1}>
                     <TextField
                         id="riot-id"
-                        label="Riot ID"
+                        label="Val Name#Tag"
                         value={riotId}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             setRiotId(event.target.value);
