@@ -33,9 +33,9 @@ export default function ValorantPlayerSearch(props: ValorantPlayerSearchProps) {
         }
 
         // Make sure the user entered a valid riot id
-        const riotIdRegex = /(.{3,16})#(.{3,5})/ //Matches any string with 3-16 characters, followed by a #, followed by 3-5 characters
+        const riotIdRegex = /^(.{3,16})#(.{3,5})$/ //Matches any string with 3-16 characters, followed by a #, followed by 3-5 characters
         if(riotIdRegex.test(riotId) === false) {
-            alert("Please enter a valid Riot ID.");
+            alert("Please enter a valid Valorant name and tag.");
             return;
         }
 
