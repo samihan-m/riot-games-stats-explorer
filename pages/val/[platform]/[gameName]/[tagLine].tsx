@@ -8,11 +8,9 @@ import { Stack, Typography } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import CustomFooter from "@/components/common/CustomFooter";
 import { ValMatch } from "@/models/val/ValMatch";
-// import ValorantProfile from "@/components/common/ValorantProfile";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import ValorantProfile from "@/components/common/ValorantProfile";
-import { error } from "console";
 
 const { publicRuntimeConfig } = getConfig();
 const { apiUrl } = publicRuntimeConfig;
@@ -149,20 +147,28 @@ export default function ValPlayerPage(props: ValPlayerPageProps) {
                     <Typography variant="h2" component="h1" align="center">
                         Error
                     </Typography>
-                    <Typography variant="h4" align="center" className="py-4">
+                    <Typography variant="h4" align="center" className="py-4 text-white">
                         {props.error?.status_code === 404 &&
                             <>
-                                {"Player not found. Either no player exists with the name or ID, or we don't have access to display their data."}
+                                {"This Valorant profile is private."}
                                 <br />
+                                {`If this is your profile, you can view your statistics by signing in with your Riot ID below.`}
+                                <br />
+                                {"Otherwise, try searching for a different name or on a different region."}
+                            </>
+                        }
+                    </Typography>
+                    <Typography variant="h4" align="center" className="text-white py-4">
+                        {props.error?.status_code !== 404 &&
+                            <>
+                                {(props.error?.status_code === undefined || props.error?.status_code !== 404) && errorMessage + " "} {/* Adding a space here because otherwise the error message and the following line have no space in between.*/}
                                 {"Try searching for a different name or on a different region."}
                             </>
                         }
-                        {(props.error?.status_code === undefined || props.error?.status_code !== 404) && errorMessage + " "} {/* Adding a space here because otherwise the error message and the following line have no space in between.*/}
                     </Typography>
-                    <Typography variant="h4" align="center" className="text-white py-4">
-                        {"If you're expecting to see your profile here, feel free to give us access by signing in with your Riot ID."}
-                    </Typography>
-                    <Link href="/riot-sign-on" className="mt-2 self-center text-xl bg-red-600 border-4 border-red-700 rounded-md pt-4 pb-4 pl-8 pr-8 text-white underline decoration-white hover:bg-red-500 hover:border-red-600">Sign in with Riot ID</Link>
+                    <Stack direction="column" alignItems="center">
+                        <Link href="/riot-sign-on" className="text-3xl bg-red-600 border-4 border-red-700 rounded-md pt-4 pb-4 pl-8 pr-8 text-white hover:underline hover:bg-red-500 hover:border-red-600">Sign in with Riot ID</Link>
+                    </Stack>
                 </Stack>
             }
             <CustomFooter />
