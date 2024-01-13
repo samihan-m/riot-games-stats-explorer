@@ -1,5 +1,5 @@
 # riot-stats-explorer
- A multi-page web app with TypeScript, Next.js, & React to display League of Legends and Valorant players' game statistics
+ A multi-page web app with TypeScript, Next.js, & React to display League of Legends and Valorant players' game statistics.
 
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
