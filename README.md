@@ -1,5 +1,5 @@
 # riot-stats-explorer
- LoL/Valorant stats review site
+ A Next.js site for exploring match statistics for League of Legends and Valorant players.
 
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
